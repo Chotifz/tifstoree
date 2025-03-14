@@ -1,0 +1,230 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User (opsional, untuk yang sudah login)
+model User {
+  id            String         @id @default(cuid())
+  name          String?
+  email         String         @unique
+  password      String?
+  phone         String?
+  address       String?
+  role          Role           @default(USER)
+  isVerified    Boolean        @default(false)
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  orders        Order[]
+  notifications Notification[]
+}
+
+// Game (kategori utama)
+model Game {
+  id               String        @id @default(cuid())
+  name             String
+  slug             String        @unique
+  description      String?       @db.Text
+  shortDescription String?
+  icon             String?
+  banner           String?
+  bannerTitle      String?
+  bannerSubtitle   String?
+  developerName    String?
+  publisherName    String?
+  isPopular        Boolean       @default(false)
+  isFeatured       Boolean       @default(false)
+  isNew            Boolean       @default(false)
+  sorting          Int           @default(0)
+  categories       Category[]
+  products         Product[]
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+}
+
+// Category (subkategori dalam game)
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String
+  description String?
+  icon        String?
+  sorting     Int       @default(0)
+  gameId      String
+  game        Game      @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([slug, gameId])
+}
+
+// Product (item spesifik yang bisa dibeli)
+model Product {
+  id              String     @id @default(cuid())
+  name            String
+  description     String?    @db.Text
+  price           Float
+  discountPrice   Float?
+  sku             String?    @unique
+  isActive        Boolean    @default(true)
+  isFeatured      Boolean    @default(false)
+  isPopular       Boolean    @default(false)
+  isNew           Boolean    @default(false)
+  sorting         Int        @default(0)
+  stock           Int?       // Null untuk unlimited
+  categoryId      String
+  category        Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  gameId          String
+  game            Game       @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  providerCode    String?    // Kode produk dari Digiflazz/VIP
+  providerType    String?    // "DIAMOND", "MEMBERSHIP", dll
+  image           String?
+  orderItems      OrderItem[]
+  requiredFields  Json?      // ["userId", "serverId", "gameUsername"]
+  instructionText String?    @db.Text // Petunjuk cara mengisi user ID, server, dll
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+}
+
+// Order (pesanan dari user, login atau tidak)
+model Order {
+  id             String      @id @default(cuid())
+  orderNumber    String      @unique
+  userId         String?     // Opsional, untuk user yang login
+  user           User?       @relation(fields: [userId], references: [id])
+  customerName   String?     // Untuk user non-login
+  customerEmail  String      // Required untuk semua user
+  customerPhone  String?     // Opsional
+  status         OrderStatus @default(PENDING)
+  totalAmount    Float
+  items          OrderItem[]
+  payment        Payment?    // Relasi one-to-one
+  gameData       Json?       // Data game seperti ID, server, dll
+  transaction    Transaction? // Relasi one-to-one
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+}
+
+model OrderItem {
+  id          String  @id @default(cuid())
+  orderId     String
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product @relation(fields: [productId], references: [id])
+  quantity    Int     @default(1)
+  price       Float
+  gameData    Json?   // Data spesifik game (ID, server, dll)
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  orderId         String        @unique
+  order           Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  amount          Float
+  status          PaymentStatus @default(PENDING)
+  method          String        // "MIDTRANS_VA", "MIDTRANS_EWALLET", dll
+  paymentProvider String        // "MIDTRANS", "XENDIT", dll
+  transactionId   String?       // ID transaksi dari gateway
+  paymentUrl      String?       // URL pembayaran
+  paymentCode     String?       // Kode VA/pembayaran
+  paymentData     Json?         // Data tambahan dari provider
+  expiredAt       DateTime?
+  paidAt          DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model Transaction {
+  id              String             @id @default(cuid())
+  transactionCode String             @unique
+  orderId         String?            @unique
+  order           Order?             @relation(fields: [orderId], references: [id])
+  type            TransactionType
+  amount          Float
+  status          TransactionStatus  @default(PENDING)
+  providerRef     String?            // Referensi ID dari provider (Digiflazz)
+  providerData    Json?              // Data dari provider
+  responseData    Json?              // Response dari provider
+  gameData        Json?              // Data game terkait
+  failedReason    String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+}
+
+model Banner {
+  id          String   @id @default(cuid())
+  title       String?
+  subtitle    String?
+  description String?  @db.Text
+  imageUrl    String
+  targetUrl   String?
+  buttonText  String?
+  isActive    Boolean  @default(true)
+  startDate   DateTime?
+  endDate     DateTime?
+  sorting     Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String   // "SYSTEM", "TRANSACTION", "PROMO"
+  title       String
+  message     String   @db.Text
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
+// Settings untuk Website
+model Setting {
+  id        String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+// Enums
+enum Role {
+  USER
+  ADMIN
+  RESELLER
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  CANCELLED
+  FAILED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  EXPIRED
+  FAILED
+  REFUNDED
+}
+
+enum TransactionType {
+  PURCHASE
+  REFUND
+}
+
+enum TransactionStatus {
+  PENDING
+  PROCESSING
+  SUCCESS
+  FAILED
+}
