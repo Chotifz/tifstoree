@@ -1,105 +1,128 @@
-// import { Button } from "@/components/ui/button";
-import { Button } from "@/components/ui/button";
-import Image from "next/image";
+'use client';
+
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+
+import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ChevronRight, Star, TrendingUp, Zap } from 'lucide-react';
+import { BannerCarousel } from '@/components/BannerCarousel';
+import { bannersResponse, gamesResponse } from '@/config/dummy-api-res';
+import Header from '@/components/Header';
+import GameCard from '@/components/GameCard';
+
+
+// Featured game card component
+
 
 export default function Home() {
-  return (
-    <div className=" grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.js
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  // Using the dummy data from the provided files
+  // In a real application, you would fetch this data from the API
+  const [games, setGames] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [banners, setBanners] = useState([]);
+  const [activeTab, setActiveTab] = useState('all');
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <Button
-            className="rounded-full bg-avocado-500 dark -800 border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </Button>
-        </div>
+  const item = {
+    hidden: { y: 20, opacity: 0 },
+    show: { y: 0, opacity: 1 }
+  };
+
+  useEffect(() => {
+    // This is where you would typically fetch the data from your API
+    // For now, we'll use the dummy data imported directly
+    async function fetchData() {
+      try {
+        // In a real app, you would do API calls here
+        // For demo purposes, we'll simulate the API response with the dummy data
+        
+        // These would be the API responses
+       
+        
+        setGames(gamesResponse);
+        setBanners(bannersResponse);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    }
+
+    fetchData();
+  }, []);
+
+  // Filter games based on the active tab
+  const filteredGames = games.filter(game => {
+    if (activeTab === 'all') return true;
+    if (activeTab === 'featured') return game.isFeatured;
+    if (activeTab === 'popular') return game.isPopular;
+    if (activeTab === 'new') return game.isNew;
+    return true;
+  });
+
+  return (
+    <div className="min-h-screen bg-background max-w-7xl mx-auto px-4 sm:px-6">
+ 
+
+      <main className="container py-6 space-y-12">
+        {/* Hero Banner Section */}
+        <section className="relative">
+          <BannerCarousel banners={banners} />
+        </section>
+
+        {/* Featured Games Section */}
+        <section>
+          <div className="flex items-center justify-between mb-6">
+            <div className="space-y-1">
+              <h2 className="text-2xl font-bold tracking-tight">Games</h2>
+              <p className="text-sm text-muted-foreground">
+                Top up your favorite games with the best prices
+              </p>
+            </div>
+            <Link 
+              href="/games" 
+              className="inline-flex items-center text-sm font-medium text-primary"
+            >
+              View all
+              <ChevronRight className="ml-1 h-4 w-4" />
+            </Link>
+          </div>
+
+          <Tabs defaultValue="all" className="w-full" onValueChange={setActiveTab}>
+            <TabsList className="mb-6">
+              <TabsTrigger value="all">All Games</TabsTrigger>
+              <TabsTrigger value="featured" className="inline-flex items-center">
+                <Star className="mr-1 h-3.5 w-3.5" />
+                Featured
+              </TabsTrigger>
+              <TabsTrigger value="popular" className="inline-flex items-center">
+                <TrendingUp className="mr-1 h-3.5 w-3.5" />
+                Popular
+              </TabsTrigger>
+              <TabsTrigger value="new" className="inline-flex items-center">
+                <Zap className="mr-1 h-3.5 w-3.5" />
+                New
+              </TabsTrigger>
+            </TabsList>
+
+            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              {filteredGames.map(game => (
+                <motion.div key={game.id} variants={item}>
+                  <GameCard game={game} />
+                </motion.div>
+                
+              ))}
+            </div>
+          </Tabs>
+        </section>
+
+        
+       
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+      
     </div>
   );
 }

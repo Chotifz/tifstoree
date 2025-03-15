@@ -9,15 +9,21 @@ const publicPaths = [
   '/games/(.*)',
   '/sign-in',
   '/register',
+  '/forgot-password',    
+  '/reset-password',     
   '/api/auth/login',
   '/api/auth/register',
   '/api/auth/verify',
+  '/api/auth/forgot-password', 
+  '/api/auth/reset-password',  
+  '/api/auth/resend-verification',
+  '/api/users'
 ];
 
 // Paths that require admin access
 const adminPaths = [
   '/dashboard/admin',
-  '/api/admin/(.*)',
+  // '/api/admin/(.*)',
 ];
 
 export async function middleware(request) {
