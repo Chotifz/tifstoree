@@ -1,8 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import { ThemeProvider } from "next-themes";
+import AuthProvider from "@/components/AuthProvider"; // We'll create this
+import ThemeProviderWrapper from "@/components/ThemeProviderWrapper";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000" || 'https://tifstore.com';
 
@@ -43,24 +42,15 @@ export const metadata = {
     ],
   },
 };
-
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased `}
-      >
-        <ThemeProvider
-        attribute="class"
-        // defaultTheme="light"
-        enableSystem
-        >
-          <Header />
-          {children}
-          <Footer />
-      </ThemeProvider>
-         
-            
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <AuthProvider>
+          <ThemeProviderWrapper>
+            {children}
+          </ThemeProviderWrapper>
+        </AuthProvider>
       </body>
     </html>
   );

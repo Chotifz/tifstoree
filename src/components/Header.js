@@ -1,12 +1,12 @@
 "use client"
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { signOut, useSession } from 'next-auth/react';
+import { useTheme } from 'next-themes';
 import Link from 'next/link';
 
-import { Bell, Search, Menu, X, ShoppingCart, User, LogOut, ChevronDown } from 'lucide-react';
-
-// import { useCart } from '@/hooks/useCart';
-
+import { Bell, Search, Menu, X, ShoppingCart, User, LogOut, ChevronDown, Sun, Moon } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -27,29 +27,35 @@ import {
   SheetTrigger,
   SheetClose,
 } from "@/components/ui/sheet";
-import { useRouter } from 'next/navigation';
-
 
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchBar, setShowSearchBar] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const { theme, setTheme } = useTheme();
   const router = useRouter();
-  // const { user, isAuthenticated, logout } = useAuth();
 
-  const isAuthenticated = true
-  const user = ""
-  const logout = ""
-  
+  const { data: session, status } = useSession();
+  const isAuthenticated = status === 'authenticated';
+  const user = session?.user;
 
-  // Check if window scrolled for shadow effect
+
+  const logout = () => {
+    signOut({ callbackUrl: '/' });
+  };
+
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    setMounted(true);
   }, []);
 
   const handleSearch = (e) => {
@@ -78,8 +84,11 @@ export default function Header() {
       .substring(0, 2);
   };
 
-  // const cartItemsCount = cartItems?.length || 0;
+  const themeToggleIcon = mounted ? 
+  (theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />) :
+  null; 
 
+  console.log(isAuthenticated)
   return (
     <header 
       className={`sticky top-0 z-50 w-full bg-background border-b transition-all duration-200 ${
@@ -153,11 +162,21 @@ export default function Header() {
               )}
             </div>
 
-
-            {/* Notifications */}
+            {/* Notifications
             <Button variant="ghost" size="icon">
               <Bell className="h-5 w-5" />
+            </Button> */}
+
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-5 w-5"
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              title={mounted ? (theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode') : ''}
+            >
+              {themeToggleIcon}
             </Button>
+            
 
             {/* User Menu or Auth Buttons */}
             {isAuthenticated ? (
@@ -208,6 +227,7 @@ export default function Header() {
                 </Link>
               </div>
             )}
+            
           </div>
 
           {/* Mobile menu button */}
@@ -217,20 +237,7 @@ export default function Header() {
               <Search className="h-5 w-5" />
             </Button>
             
-            {/* Mobile Cart Icon */}
-            {/* <Link href="/cart">
-              <Button variant="ghost" size="icon" className="relative">
-                <ShoppingCart className="h-5 w-5" />
-                {cartItemsCount > 0 && (
-                  <Badge 
-                    variant="destructive"
-                    className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-[10px]"
-                  >
-                    {cartItemsCount > 9 ? '9+' : cartItemsCount}
-                  </Badge>
-                )}
-              </Button>
-            </Link> */}
+      
             
             {/* Mobile menu drawer */}
             <Sheet>
