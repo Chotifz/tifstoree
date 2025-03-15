@@ -1,5 +1,59 @@
-// src/services/user/user.service.js
 import { prisma } from '@/lib/prisma';
+
+// Reusable select objects
+const baseUserSelect = {
+  id: true,
+  name: true,
+  email: true,
+  phone: true,
+  role: true,
+  isVerified: true,
+  createdAt: true,
+  updatedAt: true,
+};
+
+const secureUserSelect = {
+  ...baseUserSelect,
+  address: true,
+  emailVerified: true,
+  image: true,
+};
+
+/**
+ * Calculate pagination metadata
+ * @param {number} total - Total count of items
+ * @param {number} page - Current page number
+ * @param {number} limit - Items per page
+ * @returns {Object} Pagination metadata
+ */
+function getPaginationMetadata(total, page, limit) {
+  const totalPages = Math.ceil(total / limit);
+  return {
+    page,
+    limit,
+    total,
+    totalPages,
+    hasNext: page < totalPages,
+    hasPrev: page > 1,
+  };
+}
+
+/**
+ * Create search filter for user queries
+ * @param {string} search - Search term
+ * @returns {Object} Prisma compatible search filter
+ */
+function createUserSearchFilter(search) {
+  if (!search) return {};
+  
+  return {
+    OR: [
+      { name: { contains: search, mode: 'insensitive' } },
+      { email: { contains: search, mode: 'insensitive' } },
+      { phone: { contains: search, mode: 'insensitive' } },
+    ]
+  };
+}
 
 /**
  * Get user by ID
@@ -8,23 +62,7 @@ import { prisma } from '@/lib/prisma';
  * @returns {Promise<Object>} User object
  */
 export async function getUserById(id, includeSecure = false) {
-  const select = {
-    id: true,
-    name: true,
-    email: true,
-    phone: true,
-    role: true,
-    isVerified: true,
-    createdAt: true,
-    updatedAt: true,
-  };
-  
-  // Include secure fields if requested
-  if (includeSecure) {
-    select.address = true;
-    select.emailVerified = true;
-    select.image = true;
-  }
+  const select = includeSecure ? secureUserSelect : baseUserSelect;
   
   const user = await prisma.user.findUnique({
     where: { id },
@@ -57,16 +95,7 @@ export async function getUsers({
   const skip = (page - 1) * limit;
   
   // Create where clause for filtering
-  const where = {};
-  
-  // Add search filter
-  if (search) {
-    where.OR = [
-      { name: { contains: search, mode: 'insensitive' } },
-      { email: { contains: search, mode: 'insensitive' } },
-      { phone: { contains: search, mode: 'insensitive' } },
-    ];
-  }
+  const where = createUserSearchFilter(search);
   
   // Add role filter
   if (role) {
@@ -76,18 +105,7 @@ export async function getUsers({
   // Get users from database with pagination
   const users = await prisma.user.findMany({
     where,
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      phone: true,
-      role: true,
-      isVerified: true,
-      address: true,
-      image: true,
-      createdAt: true,
-      updatedAt: true,
-    },
+    select: secureUserSelect,
     skip,
     take: limit,
     orderBy: {
@@ -98,21 +116,10 @@ export async function getUsers({
   // Get total count for pagination
   const total = await prisma.user.count({ where });
   
-  // Calculate pagination metadata
-  const totalPages = Math.ceil(total / limit);
-  const hasNext = page < totalPages;
-  const hasPrev = page > 1;
-  
+  // Return data with pagination metadata
   return {
     users,
-    pagination: {
-      page,
-      limit,
-      total,
-      totalPages,
-      hasNext,
-      hasPrev,
-    },
+    pagination: getPaginationMetadata(total, page, limit),
   };
 }
 
@@ -138,18 +145,7 @@ export async function updateUser(id, data) {
   const user = await prisma.user.update({
     where: { id },
     data: updateData,
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      phone: true,
-      role: true,
-      isVerified: true,
-      address: true,
-      image: true,
-      createdAt: true,
-      updatedAt: true,
-    },
+    select: secureUserSelect,
   });
   
   return user;
@@ -169,16 +165,7 @@ export async function updateUserRole(id, role) {
   const user = await prisma.user.update({
     where: { id },
     data: { role },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      phone: true,
-      role: true,
-      isVerified: true,
-      createdAt: true,
-      updatedAt: true,
-    },
+    select: baseUserSelect,
   });
   
   return user;
@@ -217,21 +204,10 @@ export async function getUserOrders(userId, { page = 1, limit = 10 } = {}) {
   // Get total count for pagination
   const total = await prisma.order.count({ where: { userId } });
   
-  // Calculate pagination metadata
-  const totalPages = Math.ceil(total / limit);
-  const hasNext = page < totalPages;
-  const hasPrev = page > 1;
-  
+  // Return results with pagination metadata
   return {
     orders,
-    pagination: {
-      page,
-      limit,
-      total,
-      totalPages,
-      hasNext,
-      hasPrev,
-    },
+    pagination: getPaginationMetadata(total, page, limit),
   };
 }
 
@@ -253,4 +229,37 @@ export async function countUsersByRole() {
     RESELLER: counts[2],
     TOTAL: counts[3],
   };
+}
+
+/**
+ * Check if this is the last admin user
+ * @param {string} userId - The user ID to check
+ * @param {string} newRole - The new role being assigned
+ * @returns {Promise<boolean>} True if operation would remove last admin
+ */
+export async function isLastAdminUser(userId, newRole) {
+  // If the new role is still ADMIN, no need to check
+  if (newRole === 'ADMIN') {
+    return false;
+  }
+  
+  // Get the user to check their current role
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true },
+  });
+  
+  // If user is not an admin, this change doesn't affect admin count
+  if (!user || user.role !== 'ADMIN') {
+    return false;
+  }
+  
+  // Count the total admins
+  const adminCount = await prisma.user.count({
+    where: { role: 'ADMIN' },
+  });
+  
+  // If there's only one admin and we're changing their role,
+  // this would remove the last admin
+  return adminCount <= 1;
 }
