@@ -1,3 +1,4 @@
+// prisma/seed.js
 import { PrismaClient } from '@prisma/client';
 import { 
   games, 
@@ -69,8 +70,9 @@ async function main() {
       password: '$2a$10$a3vRw.R6lzN9GgZ1s8xY7.3HDJ.NWAlkBRB9mhyW0C6.5R5z6iNxO', // hashed 'password123'
       role: 'USER',
       isVerified: true,
-      joinDate: new Date('2025-01-15'),
-      image: '/images/users/default.png'
+      image: '/images/users/default.png',
+      createdAt: new Date(),
+      updatedAt: new Date()
     }
   ];
 
