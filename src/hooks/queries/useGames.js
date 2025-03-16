@@ -1,4 +1,4 @@
-// src/hooks/use-games-query.js
+// src/hooks/queries/useGames.js
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import gamesApi from '@/lib/api-client';
 
@@ -7,7 +7,7 @@ import gamesApi from '@/lib/api-client';
  * @param {Object} options - Query options
  * @param {boolean} [options.featured] - Filter by featured status
  * @param {boolean} [options.popular] - Filter by popular status
- * @param {boolean} [options.new] - Filter by new status
+ * @param {boolean} [options.isNew] - Filter by new status
  * @param {string} [options.search] - Search term
  * @param {number} [options.limit] - Limit per page
  * @param {number} [options.page] - Page number
@@ -27,6 +27,7 @@ export function useGames(options = {}, queryOptions = {}) {
       limit,
       page
     }),
+    staleTime: 5 * 60 * 1000, // 5 minutes
     ...queryOptions
   });
 }
@@ -36,7 +37,7 @@ export function useGames(options = {}, queryOptions = {}) {
  * @param {Object} options - Query options
  * @param {boolean} [options.featured] - Filter by featured status
  * @param {boolean} [options.popular] - Filter by popular status
- * @param {boolean} [options.new] - Filter by new status
+ * @param {boolean} [options.isNew] - Filter by new status
  * @param {string} [options.search] - Search term
  * @param {number} [options.limit] - Limit per page
  * @param {Object} [queryOptions] - Additional React Query options
@@ -57,8 +58,9 @@ export function useInfiniteGames(options = {}, queryOptions = {}) {
     }),
     getNextPageParam: (lastPage) => {
       const { pagination } = lastPage;
-      return pagination.hasNext ? pagination.page + 1 : undefined;
+      return pagination?.hasNext ? pagination.page + 1 : undefined;
     },
+    staleTime: 5 * 60 * 1000, // 5 minutes
     ...queryOptions
   });
 }
@@ -70,11 +72,28 @@ export function useInfiniteGames(options = {}, queryOptions = {}) {
  * @param {Object} [queryOptions] - Additional React Query options
  * @returns {Object} React Query result
  */
-export function useGameBySlug(slug, includeCategories = true, queryOptions = {}) {
+export function useGameById(id, includeCategories = true, queryOptions = {}) {
   return useQuery({
-    queryKey: ['game', slug, { includeCategories }],
-    queryFn: () => gamesApi.getGameBySlug(slug, includeCategories),
-    enabled: !!slug,
+    queryKey: ['game', id, { includeCategories }],
+    queryFn: () => gamesApi.getGameById(id, includeCategories),
+    enabled: !!id,
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    ...queryOptions
+  });
+}
+
+/**
+ * Custom hook to search games
+ * @param {string} query - Search query
+ * @param {Object} [queryOptions] - Additional React Query options
+ * @returns {Object} React Query result
+ */
+export function useSearchGames(query, queryOptions = {}) {
+  return useQuery({
+    queryKey: ['searchGames', query],
+    queryFn: () => gamesApi.searchGames(query),
+    enabled: !!query && query.length > 2,
+    staleTime: 2 * 60 * 1000, // 2 minutes
     ...queryOptions
   });
 }
@@ -91,63 +110,31 @@ export function useCategoryProducts(gameId, categoryId, queryOptions = {}) {
     queryKey: ['categoryProducts', gameId, categoryId],
     queryFn: () => gamesApi.getCategoryProducts(gameId, categoryId),
     enabled: !!gameId && !!categoryId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
     ...queryOptions
   });
 }
 
 /**
- * Custom hook to fetch featured games
- * @param {number} [limit] - Limit number of results
+ * Custom hook to fetch products for a game by slug
+ * @param {string} gameSlug - Game slug
+ * @param {Object} params - Query parameters
+ * @param {string} [params.categoryId] - Optional category ID filter
+ * @param {boolean} [params.active] - Filter by active status
+ * @param {string} [params.search] - Search term
+ * @param {number} [params.limit] - Limit number of results
+ * @param {number} [params.page] - Page number for pagination
  * @param {Object} [queryOptions] - Additional React Query options
  * @returns {Object} React Query result
  */
-export function useFeaturedGames(limit, queryOptions = {}) {
+export function useGameProducts(gameSlug, params = {}, queryOptions = {}) {
   return useQuery({
-    queryKey: ['featuredGames', limit],
-    queryFn: () => gamesApi.getFeaturedGames(limit),
+    queryKey: ['gameProducts', gameSlug, params],
+    queryFn: () => gamesApi.getGameProducts(gameSlug, params),
+    enabled: !!gameSlug,
+    staleTime: 5 * 60 * 1000, // 5 minutes
     ...queryOptions
   });
 }
 
-/**
- * Custom hook to fetch popular games
- * @param {number} [limit] - Limit number of results
- * @param {Object} [queryOptions] - Additional React Query options
- * @returns {Object} React Query result
- */
-export function usePopularGames(limit, queryOptions = {}) {
-  return useQuery({
-    queryKey: ['popularGames', limit],
-    queryFn: () => gamesApi.getPopularGames(limit),
-    ...queryOptions
-  });
-}
 
-/**
- * Custom hook to fetch new games
- * @param {number} [limit] - Limit number of results
- * @param {Object} [queryOptions] - Additional React Query options
- * @returns {Object} React Query result
- */
-export function useNewGames(limit, queryOptions = {}) {
-  return useQuery({
-    queryKey: ['newGames', limit],
-    queryFn: () => gamesApi.getNewGames(limit),
-    ...queryOptions
-  });
-}
-
-/**
- * Custom hook to search games
- * @param {string} query - Search query
- * @param {Object} [queryOptions] - Additional React Query options
- * @returns {Object} React Query result
- */
-export function useSearchGames(query, queryOptions = {}) {
-  return useQuery({
-    queryKey: ['searchGames', query],
-    queryFn: () => gamesApi.searchGames(query),
-    enabled: !!query && query.length > 2,
-    ...queryOptions
-  });
-}

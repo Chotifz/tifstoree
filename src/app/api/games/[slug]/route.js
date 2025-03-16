@@ -7,7 +7,7 @@ export async function GET(request, { params }) {
     const { slug } = params;
     const { searchParams } = new URL(request.url);
     
-    // Check if we should include categories (default to true)
+
     const includeCategories = searchParams.get('includeCategories') !== 'false';
     
     // Find game by slug with optional categories
@@ -27,7 +27,6 @@ export async function GET(request, { params }) {
       );
     }
     
-    // Return game data
     return NextResponse.json({
       success: true,
       game,

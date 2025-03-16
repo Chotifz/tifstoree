@@ -23,7 +23,8 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 
 // React Query hooks
-import { useGameBySlug, useCategoryProducts } from '@/hooks/queries/useGames';
+import {  useCategoryProducts, useGameById, useGameProducts } from '@/hooks/queries/useGames';
+import SkeletonDetailGame from '@/components/SkeletonDetailGame';
 
 // Fungsi bantuan untuk memformat harga
 const formatPrice = (price) => {
@@ -38,7 +39,7 @@ const formatPrice = (price) => {
 export default function GameDetail() {
   const params = useParams();
   const router = useRouter();
-  const { slug } = params;
+  const { id } = params;
   
   // State
   const [activeCategory, setActiveCategory] = useState('');
@@ -48,54 +49,40 @@ export default function GameDetail() {
   const [email, setEmail] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');
   
-  // Fetch game data using React Query
   const { 
     data: gameData, 
     isLoading: isGameLoading, 
     isError: isGameError, 
     error: gameError 
-  } = useGameBySlug(slug, true, {
+  } = useGameById(id, true, {
     onError: (error) => {
       console.error('Error fetching game:', error);
       toast.error("Gagal memuat data game. Silakan coba lagi.");
     }
   });
-  console.log(gameData);
-console.log('Is loading:', isGameLoading);
-console.log('Is error:', isGameError);
-console.log('Error:', gameError);
-console.log('Game data:', gameData);
-  
-  // Extract game and categories from query results
+
   const game = gameData?.game;
   const categories = game?.categories || [];
-  
-  // Set default active category when categories are loaded
+  console.log(game)
   useEffect(() => {
     if (categories.length > 0 && !activeCategory) {
       setActiveCategory(categories[0].id);
     }
   }, [categories, activeCategory]);
   
-  // Fetch products for active category using React Query
-  const {
-    data: categoryData,
-    isLoading: isProductsLoading,
-    isError: isProductsError,
-    error: productsError
-  } = useCategoryProducts(
-    game?.id, 
-    activeCategory, 
-    {
-      enabled: !!game?.id && !!activeCategory,
-      onError: (error) => {
-        console.error('Error fetching products:', error);
-        toast.error("Gagal memuat produk. Silakan coba lagi.");
-      }
+  // Fetch products for the active category
+
+  const { data: categoryData, isLoading: isProductsLoading, isError: isProductsError, error: productsError } = useGameProducts(
+    game?.slug, 
+    { 
+      categoryId: activeCategory,
+      limit: 6,
+      page: 1,
+      
+
     }
   );
   
-  // Extract products from query results
   const products = categoryData?.products || [];
   
   // Initialize form fields based on required fields from first product
@@ -233,32 +220,14 @@ console.log('Game data:', gameData);
     return products;
   }, [products]);
   
-  // Determine if page is loading
-  const isLoading = isGameLoading || (isProductsLoading && !!activeCategory);
   
-  // Loading skeleton
+  const isLoading = isGameLoading 
+  // || (isProductsLoading && !!activeCategory);
+  
+
   if (isLoading) {
     return (
-      <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center mb-6">
-          <Skeleton className="h-8 w-8 rounded-full mr-2" />
-          <Skeleton className="h-6 w-24" />
-        </div>
-        
-        <Skeleton className="h-64 w-full rounded-lg mb-6" />
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <Skeleton className="h-10 w-full max-w-md mb-6" />
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {[1, 2, 3, 4, 5, 6].map((n) => (
-                <Skeleton key={n} className="h-32 w-full rounded-lg" />
-              ))}
-            </div>
-          </div>
-          <Skeleton className="h-[500px] w-full rounded-lg" />
-        </div>
-      </div>
+      <SkeletonDetailGame />
     );
   }
   
