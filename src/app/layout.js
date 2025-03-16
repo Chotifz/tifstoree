@@ -2,6 +2,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import AuthProvider from "@/components/AuthProvider"; // We'll create this
 import ThemeProviderWrapper from "@/components/ThemeProviderWrapper";
+import QueryProvider from "@/components/QueryProvider";
+import { Toaster } from "sonner";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000" || 'https://tifstore.com';
 
@@ -48,7 +50,10 @@ export default function RootLayout({ children }) {
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <AuthProvider>
           <ThemeProviderWrapper>
-            {children}
+            <QueryProvider>
+              {children}
+              <Toaster position="top-center" richColors />
+            </QueryProvider>
           </ThemeProviderWrapper>
         </AuthProvider>
       </body>

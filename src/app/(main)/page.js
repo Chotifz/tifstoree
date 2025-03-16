@@ -2,18 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 
 import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ChevronRight, Star, TrendingUp, Zap } from 'lucide-react';
 import { BannerCarousel } from '@/components/BannerCarousel';
-import { bannersResponse, gamesResponse } from '@/config/dummy-api-res';
-import Header from '@/components/Header';
 import GameCard from '@/components/GameCard';
+import { bannersRes, gamesRes } from '@/config/dummy-data';
 
 
 // Featured game card component
@@ -43,8 +38,8 @@ export default function Home() {
         // These would be the API responses
        
         
-        setGames(gamesResponse);
-        setBanners(bannersResponse);
+        setGames(gamesRes);
+        setBanners(bannersRes);
       } catch (error) {
         console.error("Error fetching data:", error);
       }

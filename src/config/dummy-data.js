@@ -1,11 +1,11 @@
-export const games = [
+export const gamesRes = [
     {
       id: "game_ml",
       name: "Mobile Legends",
       slug: "mobile-legends",
       description: "Mobile Legends: Bang Bang adalah game MOBA yang dirancang untuk ponsel. Pertarungan 5v5 melawan pemain manusia sungguhan, dengan laning, jungling, tower rushing, dan semua yang menyenangkan dari PC MOBA.",
       shortDescription: "Game MOBA 5v5 terpopuler di Asia Tenggara",
-      icon: "/images/games/ml-icon.png",
+      icon: "/images/games/mobile-legends-games.webp",
       banner: "/images/banners/ml-banner.jpg",
       bannerTitle: "Top Up Diamond Mobile Legends",
       bannerSubtitle: "Cara tercepat dan termurah untuk top up ML",
@@ -24,7 +24,7 @@ export const games = [
       slug: "free-fire",
       description: "Garena Free Fire adalah game battle royale seluler premium. Setiap pertandingan 10 menit menempatkan Anda di pulau terpencil di mana Anda menghadapi 49 pemain lain, semuanya mencari kelangsungan hidup.",
       shortDescription: "Game battle royale seru dengan grafis ringan",
-      icon: "/images/games/ff-icon.png",
+      icon: "/images/games/free-fire.webp",
       banner: "/images/banners/ff-banner.jpg",
       bannerTitle: "Top Up Diamond Free Fire",
       bannerSubtitle: "Dapatkan diamond Free Fire dengan harga terbaik",
@@ -43,7 +43,7 @@ export const games = [
       slug: "pubg-mobile",
       description: "PUBG Mobile adalah game battle royale yang dikembangkan oleh Tencent Games dan PUBG Corporation. Game ini didasarkan pada PLAYERUNKNOWN'S BATTLEGROUNDS, menghadirkan aksi battle royale kompetitif 100 pemain ke perangkat mobile.",
       shortDescription: "Battle royale realistis dengan grafis berkualitas tinggi",
-      icon: "/images/games/pubg-icon.png",
+      icon: "/images/games/pubg-mobile-games.webp",
       banner: "/images/banners/pubg-banner.jpg",
       bannerTitle: "Top Up UC PUBG Mobile",
       bannerSubtitle: "Beli UC PUBG dengan mudah dan aman",
@@ -62,7 +62,7 @@ export const games = [
       slug: "genshin-impact",
       description: "Genshin Impact adalah game role-playing action dunia terbuka. Game ini memungkinkan pemain untuk mengontrol salah satu dari empat karakter dalam sebuah tim dan beralih antar karakter dengan cepat saat melakukan berbagai serangan, mengumpulkan item, dan mengeksplorasi dunia Teyvat yang luas.",
       shortDescription: "RPG open world dengan visual memukau",
-      icon: "/images/games/genshin-icon.png",
+      icon: "/images/games/genshin-impact-games.webp",
       banner: "/images/banners/genshin-banner.jpg",
       bannerTitle: "Top Up Genesis Crystal Genshin Impact",
       bannerSubtitle: "Beli Genesis Crystal dengan harga terbaik",
@@ -81,7 +81,7 @@ export const games = [
       slug: "honor-of-kings",
       description: "Honor of Kings adalah game MOBA yang dikembangkan dan diterbitkan oleh Tencent Games untuk platform seluler. Game ini menawarkan pengalaman MOBA kompetitif 5v5 dengan berbagai pahlawan untuk dipilih.",
       shortDescription: "Game MOBA 5v5 dari Tencent Games",
-      icon: "/images/games/hok-icon.png",
+      icon: "/images/games/honor-of-kings.webp",
       banner: "/images/banners/hok-banner.jpg",
       bannerTitle: "Top Up Koin Honor of Kings",
       bannerSubtitle: "Dapatkan koin dengan mudah dan cepat",
@@ -93,10 +93,124 @@ export const games = [
       sorting: 5,
       createdAt: new Date(),
       updatedAt: new Date()
+    },
+    {
+      id: "game_mcg",
+      name: "Magic Chess GoGo",
+      slug: "magic-chess-gogo",
+      description: "Magic Chess GoGo adalah game auto chess yang menawarkan pertandingan strategi seru dengan berbagai hero dan kombinasi yang dapat dipadukan. Pemain bersaing untuk membangun tim terkuat dan menjadi yang terakhir bertahan.",
+      shortDescription: "Auto chess dengan strategi tim yang seru",
+      icon: "/images/games/magic-chess.png",
+      banner: "/images/banners/mcg-banner.jpg",
+      bannerTitle: "Top Up Magic Chess GoGo",
+      bannerSubtitle: "Beli mata uang game dengan harga terbaik",
+      developerName: "CarneGie",
+      publisherName: "CarneGie",
+      isPopular: false,
+      isFeatured: false,
+      isNew: true,
+      sorting: 5,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    },
+    {
+      id: "game_aov",
+      name: "Arena of Valor",
+      slug: "arena-of-valor",
+      description: "Arena of Valor adalah game MOBA 5v5 yang dikembangkan oleh TiMi Studio Group dan diterbitkan oleh Level Infinite. Game ini menawarkan pertempuran tim yang intens dengan beragam hero dan mode permainan yang menarik.",
+      shortDescription: "MOBA 5v5 dengan grafis premium dan gameplay yang cepat",
+      icon: "/images/games/arena-of-valor-games.webp",
+      banner: "/images/banners/aov-banner.jpg",
+      bannerTitle: "Top Up Voucher Arena of Valor",
+      bannerSubtitle: "Dapatkan voucher AoV dengan mudah dan cepat",
+      developerName: "TiMi Studio Group",
+      publisherName: "Level Infinite",
+      isPopular: false,
+      isFeatured: false,
+      isNew: true,
+      sorting: 5,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    },
+    {
+      id: "game_eafc",
+      name: "EA FC Sports Mobile",
+      slug: "ea-fc-sports-mobile",
+      description: "EA FC Sports Mobile (sebelumnya FIFA Mobile) adalah game sepak bola untuk perangkat mobile yang dikembangkan oleh Electronic Arts. Game ini menawarkan pengalaman sepak bola lengkap dengan lisensi resmi klub dan pemain dari seluruh dunia.",
+      shortDescription: "Simulasi sepak bola mobile dengan lisensi resmi",
+      icon: "/images/games/fc-mobile.jpg",
+      banner: "/images/banners/eafc-banner.jpg",
+      bannerTitle: "Top Up FC Points EA FC Sports Mobile",
+      bannerSubtitle: "Beli FC Points dengan harga terbaik",
+      developerName: "Electronic Arts",
+      publisherName: "Electronic Arts",
+      isPopular: true,
+      isFeatured: false,
+      isNew: true,
+      sorting: 5,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    },
+    {
+      id: "game_cod",
+      name: "Call of Duty",
+      slug: "call-of-duty",
+      description: "Call of Duty: Mobile adalah game first-person shooter yang dikembangkan oleh TiMi Studio Group dan diterbitkan oleh Activision. Game ini menampilkan mode multiplayer klasik COD dan mode battle royale untuk perangkat mobile.",
+      shortDescription: "FPS dan battle royale premium dengan aksi intens",
+      icon: "/images/games/call-of-duty-mobile-games.webp",
+      banner: "/images/banners/cod-banner.jpg",
+      bannerTitle: "Top Up CP Call of Duty",
+      bannerSubtitle: "Beli CP COD Mobile dengan mudah dan aman",
+      developerName: "TiMi Studio Group",
+      publisherName: "Activision",
+      isPopular: true,
+      isFeatured: false,
+      isNew: false,
+      sorting: 5,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    },
+    {
+      id: "game_zzz",
+      name: "Zenless Zone Zero",
+      slug: "zenless-zone-zero",
+      description: "Zenless Zone Zero adalah action RPG urban fantasy yang dikembangkan oleh miHoYo. Game ini berlatar di kota post-apocalyptic New Eridu, dimana pemain berperan sebagai Proxy yang memimpin karakter untuk melawan monster dari dimensi lain yang disebut Hollows.",
+      shortDescription: "Action RPG urban dengan gaya visual anime yang menawan",
+      icon: "/images/games/zenless-zone-zero.webp",
+      banner: "/images/banners/zzz-banner.jpg",
+      bannerTitle: "Top Up Stellar Jade Zenless Zone Zero",
+      bannerSubtitle: "Beli Stellar Jade dengan harga terbaik",
+      developerName: "miHoYo",
+      publisherName: "HoYoverse",
+      isPopular: true,
+      isFeatured: true,
+      isNew: true,
+      sorting: 5,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    },
+    {
+      id: "game_coc",
+      name: "Clash of Clans",
+      slug: "clash-of-clans",
+      description: "Clash of Clans adalah game strategi mobile dimana pemain membangun komunitas, melatih pasukan, dan menyerang pemain lain untuk mendapatkan sumber daya. Game ini menggabungkan elemen pembangunan basis, strategi pertempuran, dan pengembangan karakter.",
+      shortDescription: "Game strategi membangun desa dan berperang",
+      icon: "/images/games/clash-of-clans.jpg",
+      banner: "/images/banners/coc-banner.jpg",
+      bannerTitle: "Top Up Gems Clash of Clans",
+      bannerSubtitle: "Beli Gems CoC dengan mudah dan aman",
+      developerName: "Supercell",
+      publisherName: "Supercell",
+      isPopular: true,
+      isFeatured: false,
+      isNew: false,
+      sorting: 5,
+      createdAt: new Date(),
+      updatedAt: new Date()
     }
   ];
 
-export const categories = [
+export const categoriesRes = [
     // Mobile Legends Categories
     {
       id: "cat_ml_diamond",
@@ -207,7 +321,7 @@ export const categories = [
     }
   ];
 
-export const products = [
+export const productsRes = [
     // Mobile Legends Diamond Products
     {
       id: "prod_ml_diamond_5",
@@ -450,7 +564,7 @@ export const products = [
     }
   ];
 
-export const banners = [
+export const bannersRes = [
     {
       id: "banner_promo_ml",
       title: "Promo Diamond Mobile Legends",
@@ -498,7 +612,7 @@ export const banners = [
     }
   ];
 
-export const orders = [
+export const ordersRes= [
     {
       id: "order_1",
       orderNumber: "ORD20250314001",
@@ -534,7 +648,7 @@ export const orders = [
     }
   ];
   
-export const orderItems = [
+export const orderItemsRes = [
     {
       id: "item_1",
       orderId: "order_1",
@@ -560,7 +674,7 @@ export const orderItems = [
     }
   ];
   
-export const payments = [
+export const paymentsRes = [
     {
       id: "payment_1",
       orderId: "order_1",
@@ -609,7 +723,7 @@ export const payments = [
     }
   ];
   
-export const transactions = [
+export const transactionsRes = [
     {
       id: "trans_1",
       transactionCode: "TRX20250314001",

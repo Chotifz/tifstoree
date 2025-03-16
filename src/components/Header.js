@@ -67,7 +67,7 @@ export default function Header() {
   };
 
   const navItems = [
-    { name: 'Games', href: '#' },
+    { name: 'Games', href: '/games' },
     { name: 'Kategori', href: '#' },
     { name: 'Cara Topup', href: '#' },
     { name: 'Promo', href: '#' },

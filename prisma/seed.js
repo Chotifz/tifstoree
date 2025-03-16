@@ -1,15 +1,6 @@
 // prisma/seed.js
 import { PrismaClient } from '@prisma/client';
-import { 
-  games, 
-  categories, 
-  products, 
-  banners, 
-  orders, 
-  orderItems, 
-  payments, 
-  transactions 
-} from '../src/config/dummy-data.js';
+import { bannersRes, categoriesRes, gamesRes, ordersRes, productsRes } from '../src/config/dummy-data.js';
 
 const prisma = new PrismaClient();
 
@@ -18,7 +9,7 @@ async function main() {
 
   // Create games
   console.log('Seeding games...');
-  for (const game of games) {
+  for (const game of gamesRes) {
     await prisma.game.upsert({
       where: { id: game.id },
       update: game,
@@ -29,7 +20,7 @@ async function main() {
 
   // Create categories
   console.log('Seeding categories...');
-  for (const category of categories) {
+  for (const category of categoriesRes) {
     await prisma.category.upsert({
       where: { id: category.id },
       update: category,
@@ -40,7 +31,7 @@ async function main() {
 
   // Create products
   console.log('Seeding products...');
-  for (const product of products) {
+  for (const product of productsRes) {
     await prisma.product.upsert({
       where: { id: product.id },
       update: product,
@@ -51,7 +42,7 @@ async function main() {
 
   // Create banners
   console.log('Seeding banners...');
-  for (const banner of banners) {
+  for (const banner of bannersRes) {
     await prisma.banner.upsert({
       where: { id: banner.id },
       update: banner,
@@ -88,7 +79,7 @@ async function main() {
   // Create orders, order items, payments, and transactions
   console.log('Seeding orders and related data...');
   
-  for (const order of orders) {
+  for (const order of ordersRes) {
     // Skip orders with userId that doesn't match any of our created users
     if (order.userId && !users.some(user => user.id === order.userId)) {
       console.log(`Skipping order ${order.id} because userId ${order.userId} doesn't exist`);
