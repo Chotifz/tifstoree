@@ -25,6 +25,10 @@ import { toast } from "sonner";
 // React Query hooks
 import {  useCategoryProducts, useGameById, useGameProducts } from '@/hooks/queries/useGames';
 import SkeletonDetailGame from '@/components/SkeletonDetailGame';
+import GameDetailError from '@/components/GameDetailError';
+import GameDetailBanner from '@/components/games-detail/GameDetailBanner';
+import HeaderGameDetail from '@/components/games-detail/HeaderGameDetail';
+import HowToTopUp from '@/components/games-detail/HowToTopUpCard';
 
 // Fungsi bantuan untuk memformat harga
 const formatPrice = (price) => {
@@ -49,21 +53,17 @@ export default function GameDetail() {
   const [email, setEmail] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');
   
+ // Fetch game data with categories
   const { 
     data: gameData, 
     isLoading: isGameLoading, 
-    isError: isGameError, 
-    error: gameError 
-  } = useGameById(id, true, {
-    onError: (error) => {
-      console.error('Error fetching game:', error);
-      toast.error("Gagal memuat data game. Silakan coba lagi.");
-    }
-  });
+    isError: isGameError 
+  } = useGameById(id, true);
+  
 
   const game = gameData?.game;
   const categories = game?.categories || [];
-  console.log(game)
+
   useEffect(() => {
     if (categories.length > 0 && !activeCategory) {
       setActiveCategory(categories[0].id);
@@ -72,49 +72,21 @@ export default function GameDetail() {
   
   // Fetch products for the active category
 
-  const { data: categoryData, isLoading: isProductsLoading, isError: isProductsError, error: productsError } = useGameProducts(
-    game?.slug, 
-    { 
-      categoryId: activeCategory,
-      limit: 6,
-      page: 1,
-      
-
-    }
-  );
+   // Fetch products for the active category
+   const { 
+    data: productsData, 
+    isLoading: isProductsLoading, 
+    isError: isProductsError 
+  } = useGameProducts(id, { 
+    categoryId: activeCategory,
+    active: true
+  }, {
+    enabled: !!activeCategory // Only run the query if we have an active category
+  });
   
-  const products = categoryData?.products || [];
+  const products = productsData?.products || [];
   
-  // Initialize form fields based on required fields from first product
-  useEffect(() => {
-    if (products.length > 0) {
-      const firstProduct = products[0];
-      const initialFields = {};
-      
-      if (firstProduct.requiredFields) {
-        // Convert requiredFields from JSON if needed
-        const fields = typeof firstProduct.requiredFields === 'string' 
-          ? JSON.parse(firstProduct.requiredFields) 
-          : firstProduct.requiredFields;
-          
-        fields.forEach(field => {
-          // Only initialize if not already set
-          if (!gameFormFields[field]) {
-            initialFields[field] = '';
-          }
-        });
-      }
-      
-      // Only update if we have new fields to add
-      if (Object.keys(initialFields).length > 0) {
-        setGameFormFields(prev => ({
-          ...prev,
-          ...initialFields
-        }));
-      }
-    }
-  }, [products, gameFormFields]);
-  
+ 
   // Handle field changes
   const handleFieldChange = (field, value) => {
     setGameFormFields(prev => ({
@@ -221,62 +193,22 @@ export default function GameDetail() {
   }, [products]);
   
   
-  const isLoading = isGameLoading 
-  // || (isProductsLoading && !!activeCategory);
   
-
-  if (isLoading) {
+  if (isGameLoading) {
     return (
       <SkeletonDetailGame />
     );
   }
   
-  // Error state or game not found
   if (isGameError || !game) {
     return (
-      <div className="max-w-7xl mx-auto py-10 px-4 text-center">
-        <Alert variant="destructive" className="mx-auto max-w-md">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Game tidak ditemukan</AlertTitle>
-          <AlertDescription>
-            Game yang Anda cari tidak ditemukan atau telah dihapus.
-          </AlertDescription>
-        </Alert>
-        <Button 
-          variant="outline" 
-          onClick={() => router.push('/')}
-          className="mt-6"
-        >
-          <ChevronLeft className="mr-2 h-4 w-4" /> Kembali ke Beranda
-        </Button>
-      </div>
+      <GameDetailError />
     );
   }
 
   return (
     <div className="bg-background min-h-screen">
-      {/* Game banner/hero section */}
-      <div 
-        className="w-full h-56 sm:h-64 md:h-80 relative bg-gradient-to-r from-primary/90 to-primary/30"
-        style={{
-          backgroundImage: `url(${game.banner})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundBlendMode: 'overlay'
-        }}
-      >
-        <div className="max-w-7xl mx-auto h-full flex items-end px-4 sm:px-6 lg:px-8">
-          <div className="pb-8 w-full">
-            <h1 className="text-white text-2xl md:text-3xl lg:text-4xl font-bold">
-              {game.bannerTitle || `Top Up ${game.name}`}
-            </h1>
-            <p className="text-white/90 mt-2">
-              {game.bannerSubtitle || game.shortDescription}
-            </p>
-          </div>
-        </div>
-      </div>
-      
+      {/* <GameDetailBanner game={game}/>  */}
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {/* Back button */}
         <div className="mb-6">
@@ -290,96 +222,14 @@ export default function GameDetail() {
             </Link>
           </Button>
         </div>
-        
-        {/* Game info header card */}
-        <Card className="mb-8 overflow-hidden border-border/40">
-          <CardContent className="p-6">
-            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-              <Avatar className="h-16 w-16 rounded-lg border border-border shadow-sm">
-                <AvatarImage src={game.icon} alt={game.name} />
-                <AvatarFallback className="rounded-lg bg-primary/10">
-                  {game.name.substring(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              
-              <div className="space-y-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="text-xl font-bold">{game.name}</h1>
-                  
-                  {game.isPopular && (
-                    <Badge 
-                      variant="secondary" 
-                      className="bg-amber-100 text-amber-700 dark:bg-amber-700/20 dark:text-amber-400"
-                    >
-                      <TrendingUp className="h-3 w-3 mr-1" /> Populer
-                    </Badge>
-                  )}
-                  
-                  {game.isNew && (
-                    <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-700/20 dark:text-emerald-400">
-                      Baru
-                    </Badge>
-                  )}
-                </div>
-                
-                <p className="text-muted-foreground">{game.shortDescription}</p>
-                
-                <div className="flex flex-wrap gap-2 text-xs">
-                  <div className="bg-muted px-2 py-1 rounded-md">
-                    Developer: {game.developerName}
-                  </div>
-                  <div className="bg-muted px-2 py-1 rounded-md">
-                    Publisher: {game.publisherName}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+  
+        <HeaderGameDetail game={game} />
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - How to top up, ID input, Product selection */}
           <div className="lg:col-span-2 space-y-6">
             {/* How to top up */}
-            <Card className="border-border/40">
-              <CardContent className="p-6">
-                <h2 className="text-lg font-semibold mb-4 flex items-center">
-                  <Info className="h-5 w-5 mr-2 text-primary" />
-                  Cara Top Up {game.name}
-                </h2>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 md:gap-y-6 gap-x-4">
-                  <div className="flex">
-                    <div className="bg-primary/10 rounded-full h-7 w-7 flex items-center justify-center text-primary font-medium mr-3 mt-0.5 shrink-0">1</div>
-                    <div>
-                      <p className="font-medium">Masukkan ID</p>
-                      <p className="text-sm text-muted-foreground">Masukkan User ID dan Server ID (jika diperlukan)</p>
-                    </div>
-                  </div>
-                  <div className="flex">
-                    <div className="bg-primary/10 rounded-full h-7 w-7 flex items-center justify-center text-primary font-medium mr-3 mt-0.5 shrink-0">2</div>
-                    <div>
-                      <p className="font-medium">Pilih Nominal</p>
-                      <p className="text-sm text-muted-foreground">Pilih nominal top up yang diinginkan</p>
-                    </div>
-                  </div>
-                  <div className="flex">
-                    <div className="bg-primary/10 rounded-full h-7 w-7 flex items-center justify-center text-primary font-medium mr-3 mt-0.5 shrink-0">3</div>
-                    <div>
-                      <p className="font-medium">Pilih Pembayaran</p>
-                      <p className="text-sm text-muted-foreground">Pilih metode pembayaran yang tersedia</p>
-                    </div>
-                  </div>
-                  <div className="flex">
-                    <div className="bg-primary/10 rounded-full h-7 w-7 flex items-center justify-center text-primary font-medium mr-3 mt-0.5 shrink-0">4</div>
-                    <div>
-                      <p className="font-medium">Selesaikan Pembayaran</p>
-                      <p className="text-sm text-muted-foreground">Produk akan masuk otomatis ke akun</p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <HowToTopUp game={game} />
             
             {/* ID Input card */}
             <Card className="border-border/40">

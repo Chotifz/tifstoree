@@ -27,14 +27,13 @@ import {
   SheetTrigger,
   SheetClose,
 } from "@/components/ui/sheet";
+import { getInitials } from '@/lib/utils';
 
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchBar, setShowSearchBar] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const { theme, setTheme } = useTheme();
   const router = useRouter();
 
   const { data: session, status } = useSession();
@@ -54,41 +53,16 @@ export default function Header() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
-      setShowSearchBar(false);
-    }
-  };
 
   const navItems = [
-    { name: 'Games', href: '/games' },
+   
     { name: 'Kategori', href: '#' },
-    { name: 'Cara Topup', href: '#' },
+    { name: 'Periksa Pesanan', href: '#' },
     { name: 'Promo', href: '#' },
   ];
 
-  // Utilities
-  const getInitials = (name) => {
-    if (!name) return 'U';
-    return name
-      .split(' ')
-      .map(part => part[0])
-      .join('')
-      .toUpperCase()
-      .substring(0, 2);
-  };
 
-  const themeToggleIcon = mounted ? 
-  (theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />) :
-  null; 
-
-  console.log(isAuthenticated)
   return (
     <header 
       className={`sticky top-0 z-50 w-full bg-background border-b transition-all duration-200 ${
@@ -98,7 +72,7 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex justify-between items-center py-4 md:space-x-10">
           {/* Logo */}
-          <div className="flex justify-start lg:w-0 lg:flex-1">
+          <div className=" w-full flex justify-start flex-1 ">
             <Link href="/" className="flex items-center">
               <div className="h-9 w-9 rounded-md bg-primary/10 flex items-center justify-center text-primary">
                 <svg className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
@@ -130,54 +104,6 @@ export default function Header() {
 
           {/* Desktop Right Section */}
           <div className="hidden md:flex items-center justify-end md:flex-1 space-x-3">
-            {/* Search Icon/Bar */}
-            <div className="relative">
-              {showSearchBar ? (
-                <form onSubmit={handleSearch} className="absolute right-0 top-0 w-64 flex">
-                  <Input
-                    type="text"
-                    placeholder="Cari game..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full"
-                  />
-                  <Button 
-                    type="submit" 
-                    size="icon" 
-                    variant="ghost"
-                    className="absolute right-1 top-1/2 transform -translate-y-1/2"
-                  >
-                    <Search className="h-4 w-4" />
-                  </Button>
-                </form>
-              ) : (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setShowSearchBar(true)}
-                  aria-label="Search"
-                >
-                  <Search className="h-5 w-5" />
-                </Button>
-              )}
-            </div>
-
-            {/* Notifications
-            <Button variant="ghost" size="icon">
-              <Bell className="h-5 w-5" />
-            </Button> */}
-
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-5 w-5"
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              title={mounted ? (theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode') : ''}
-            >
-              {themeToggleIcon}
-            </Button>
-            
-
             {/* User Menu or Auth Buttons */}
             {isAuthenticated ? (
               <DropdownMenu>
@@ -203,7 +129,7 @@ export default function Header() {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/orderes" className="cursor-pointer w-full">
+                    <Link href="/orders" className="cursor-pointer w-full">
                       <ShoppingCart className="mr-2 h-4 w-4" /> Pesanan Saya
                     </Link>
                   </DropdownMenuItem>
@@ -232,12 +158,6 @@ export default function Header() {
 
           {/* Mobile menu button */}
           <div className="flex md:hidden items-center space-x-3">
-            {/* Mobile Search Icon */}
-            <Button variant="ghost" size="icon" onClick={() => setShowSearchBar(!showSearchBar)}>
-              <Search className="h-5 w-5" />
-            </Button>
-            
-      
             
             {/* Mobile menu drawer */}
             <Sheet>
@@ -282,28 +202,7 @@ export default function Header() {
                     </Link>
                   </div>
                 )}
-                
-                {/* Mobile search */}
-                <form onSubmit={handleSearch} className="mb-6">
-                  <div className="relative">
-                    <Input
-                      type="text"
-                      placeholder="Cari game..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pr-10"
-                    />
-                    <Button 
-                      type="submit" 
-                      size="icon" 
-                      variant="ghost"
-                      className="absolute right-0 top-0"
-                    >
-                      <Search className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </form>
-                
+              
                 {/* Mobile Navigation */}
                 <nav className="flex flex-col space-y-4">
                   {navItems.map((item) => (
@@ -330,9 +229,6 @@ export default function Header() {
                     </Link>
                     <Link href="/orders" className="text-muted-foreground hover:text-foreground transition-colors">
                       Pesanan Saya
-                    </Link>
-                    <Link href="/how-to" className="text-muted-foreground hover:text-foreground transition-colors">
-                      Cara Top Up
                     </Link>
                     {isAuthenticated && (
                       <Button 

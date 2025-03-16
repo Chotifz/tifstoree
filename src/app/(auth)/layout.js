@@ -7,11 +7,10 @@ export const metadata = {
 
 export default function AuthLayout({ children }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body >
-        <Header />
+    <>
+      
           {children}
-      </body>
-    </html>
+    
+    </>
   );
 }

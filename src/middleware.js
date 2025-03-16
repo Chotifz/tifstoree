@@ -11,13 +11,7 @@ const publicPaths = [
   '/register',
   '/forgot-password',    
   '/reset-password',     
-  '/api/auth/login',
-  '/api/auth/register',
-  '/api/auth/verify',
-  '/api/auth/forgot-password', 
-  '/api/auth/reset-password',  
-  '/api/auth/resend-verification',
-  '/api/users'
+  '/api/(.*)',
 ];
 
 // Paths that require admin access

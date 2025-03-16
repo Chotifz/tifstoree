@@ -8,30 +8,36 @@ import { Moon, Sun } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 
 export default function Footer() {
-  
- 
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+
+  const themeToggleIcon = mounted ? 
+  (theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />) :
+  null; 
 
   return (
     <footer className="bg-card text-card-foreground py-10 mt-12">
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex flex-col md:flex-row justify-between">
           <div className="mb-6 md:mb-0">
-            <h3 className="font-semibold text-lg mb-4 flex items-center">
-              <span className="tracking-wider font-bold text-primary">TIF</span> Store
+            <div className="font-semibold text-lg mb-4 flex items-center w-full justify-between md:pr-4">
+              <span className='w-full flex items-center'>
+                <span className="tracking-wider font-bold text-primary">TIF</span> Store
+              </span>
               
-              {/* Theme Toggle Button */}
-              
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="ml-4"
-                  // onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                  // title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-                >
-                   <Moon className="h-5 w-5" />
-                </Button>
+              <Button
+              variant="ghost"
+              size="icon"
+              className="h-5 w-5 "
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              title={mounted ? (theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode') : ''}
+            >
+              {themeToggleIcon}
+            </Button>
              
-            </h3>
+            </div>
             <p className="text-muted-foreground text-sm max-w-xs">
               Top up game favorit kamu dengan mudah, aman, dan harga terjangkau
             </p>

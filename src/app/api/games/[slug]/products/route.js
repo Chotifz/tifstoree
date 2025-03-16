@@ -1,10 +1,10 @@
-// src/app/api/games/[id]/products/route.js
+// src/app/api/games/[slug]/products/route.js
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(request, { params }) {
   try {
-    const { id } = params;
+    const { slug } = params;
     const { searchParams } = new URL(request.url);
     
     // Get query parameters
@@ -14,9 +14,9 @@ export async function GET(request, { params }) {
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit'), 10) : undefined;
     const page = searchParams.get('page') ? parseInt(searchParams.get('page'), 10) : 1;
     
-    // First, find the game by id
+    // First, find the game by slug
     const game = await prisma.game.findUnique({
-      where: { id },
+      where: { slug },
       select: { id: true }
     });
     
@@ -61,7 +61,7 @@ export async function GET(request, { params }) {
           select: {
             id: true,
             name: true,
-            id: true
+            slug: true
           }
         }
       },

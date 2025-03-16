@@ -120,12 +120,12 @@ export function useCategoryProducts(gameId, categoryId, queryOptions = {}) {
  * @param {string} gameSlug - Game slug
  * @param {Object} params - Query parameters
  * @param {string} [params.categoryId] - Optional category ID filter
- * @param {boolean} [params.active] - Filter by active status
- * @param {string} [params.search] - Search term
- * @param {number} [params.limit] - Limit number of results
+ * @param {boolean} [params.active] - Filter by active status (true/false)
+ * @param {string} [params.search] - Search term for product name or description
+ * @param {number} [params.limit] - Limit number of results per page
  * @param {number} [params.page] - Page number for pagination
  * @param {Object} [queryOptions] - Additional React Query options
- * @returns {Object} React Query result
+ * @returns {Object} React Query result with products data
  */
 export function useGameProducts(gameSlug, params = {}, queryOptions = {}) {
   return useQuery({

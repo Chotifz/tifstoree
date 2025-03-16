@@ -239,7 +239,7 @@ export default function RegisterPage() {
                   <Checkbox id="terms" name="terms" required />
                   <label
                     htmlFor="terms"
-                    className="text-sm text-muted-foreground cursor-pointer"
+                    className="ml-2 text-sm text-muted-foreground cursor-pointer"
                   >
                     Saya setuju dengan{" "}
                     <Link href="/terms" className="text-primary hover:underline font-medium">
