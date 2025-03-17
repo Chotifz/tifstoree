@@ -1,72 +1,35 @@
+// src/app/api/games/route.js
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { getGames, createGame } from '@/services/product/game.service';
+import { z } from 'zod';
 
 export async function GET(request) {
   try {
-    // Get query parameters
     const { searchParams } = new URL(request.url);
     
-    // Parse filter parameters
     const featured = searchParams.get('featured') === 'true';
     const popular = searchParams.get('popular') === 'true';
     const isNew = searchParams.get('new') === 'true';
     const search = searchParams.get('search') || '';
     
-    // Parse pagination parameters
     const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = parseInt(searchParams.get('limit') || '10', 10);
-    const skip = (page - 1) * limit;
-    
-    // Build the where clause based on filters
-    const where = {};
-    
-    if (featured) {
-      where.isFeatured = true;
-    }
-    
-    if (popular) {
-      where.isPopular = true;
-    }
-    
-    if (isNew) {
-      where.isNew = true;
-    }
-    
-    if (search) {
-      where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
-        { shortDescription: { contains: search, mode: 'insensitive' } },
-      ];
-    }
-    
-    // Get games from the database
-    const games = await prisma.game.findMany({
-      where,
-      orderBy: { sorting: 'asc' },
-      skip,
-      take: limit,
-    });
-    
-    // Get total count for pagination
-    const total = await prisma.game.count({ where });
-    
-    // Create pagination metadata
-    const totalPages = Math.ceil(total / limit);
-    const pagination = {
+
+    const result = await getGames({
+      featured: searchParams.has('featured') ? featured : undefined,
+      popular: searchParams.has('popular') ? popular : undefined,
+      isNew: searchParams.has('new') ? isNew : undefined,
+      search,
       page,
       limit,
-      total,
-      totalPages,
-      hasNext: page < totalPages,
-      hasPrev: page > 1,
-    };
+    });
     
-    // Return response
     return NextResponse.json({
       success: true,
-      games,
-      pagination,
+      games: result.games,
+      pagination: result.pagination,
     });
     
   } catch (error) {
@@ -77,6 +40,79 @@ export async function GET(request) {
         success: false, 
         message: 'Failed to fetch games', 
         error: error.message,
+      }, 
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request) {
+  try {
+
+    const session = await getServerSession(authOptions);
+    
+    if (!session || !session.user || session.user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+    
+    const body = await request.json();
+    
+    const gameSchema = z.object({
+      name: z.string().min(1, { message: "Name is required" }),
+      slug: z.string().optional(),
+      description: z.string().optional(),
+      shortDescription: z.string().optional(),
+      developerName: z.string().optional(),
+      publisherName: z.string().optional(),
+      icon: z.string().optional(),
+      banner: z.string().optional(),
+      bannerTitle: z.string().optional(),
+      bannerSubtitle: z.string().optional(),
+      isFeatured: z.boolean().optional(),
+      isPopular: z.boolean().optional(),
+      isNew: z.boolean().optional(),
+      sorting: z.number().optional(),
+    });
+    
+    const result = gameSchema.safeParse(body);
+    
+    if (!result.success) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        }, 
+        { status: 400 }
+      );
+    }
+    
+    const game = await createGame(result.data);
+    
+    return NextResponse.json({
+      success: true,
+      message: "Game created successfully",
+      game,
+    }, { status: 201 });
+    
+  } catch (error) {
+    console.error('Error creating game:', error);
+    
+    if (error.message.includes('already exists')) {
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: 409 }
+      );
+    }
+    
+    return NextResponse.json(
+      { 
+        success: false, 
+        message: "Failed to create game", 
+        error: error.message 
       }, 
       { status: 500 }
     );
