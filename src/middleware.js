@@ -1,8 +1,6 @@
-// src/middleware.js
 import { NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 
-// Paths that don't require authentication
 const publicPaths = [
   '/',
   '/games',
@@ -12,11 +10,14 @@ const publicPaths = [
   '/forgot-password',    
   '/reset-password',     
   '/api/(.*)',
+  '/_next/(.*)',         
+  '/favicon.ico',      
+  '/images/(.*)', 
 ];
 
-// Paths that require admin access
 const adminPaths = [
   '/dashboard/admin',
+  '/admin/(.*)',
   // '/api/admin/(.*)',
 ];
 

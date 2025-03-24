@@ -70,20 +70,18 @@ export default function Header() {
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="flex justify-between items-center py-4 md:space-x-10">
+        <div className="flex justify-between items-center py-4">
           {/* Logo */}
-          <div className=" w-full flex justify-start flex-1 ">
-            <Link href="/" className="flex items-center">
-              <div className="h-9 w-9 rounded-md bg-primary/10 flex items-center justify-center text-primary">
-                <svg className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M21,6H3A2,2 0 0,0 1,8V16A2,2 0 0,0 3,18H21A2,2 0 0,0 23,16V8A2,2 0 0,0 21,6M21,16H3V8H21M6,15H8V13H10V11H8V9H6V11H4V13H6M14,15H19V13H14V11H19V9H14A2,2 0 0,0 12,11V13A2,2 0 0,0 14,15Z" />
-                </svg>
-              </div>
-              <span className="ml-2 font-bold text-xl text-foreground">
-                <span className="tracking-wide text-primary">TIF</span> Store
-              </span>
-            </Link>
-          </div>
+          <Link href="/" className="flex items-center">
+            <div className="h-9 w-9 rounded-md bg-primary/10 flex items-center justify-center text-primary">
+              <svg className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M21,6H3A2,2 0 0,0 1,8V16A2,2 0 0,0 3,18H21A2,2 0 0,0 23,16V8A2,2 0 0,0 21,6M21,16H3V8H21M6,15H8V13H10V11H8V9H6V11H4V13H6M14,15H19V13H14V11H19V9H14A2,2 0 0,0 12,11V13A2,2 0 0,0 14,15Z" />
+              </svg>
+            </div>
+            <span className="ml-2 font-bold text-xl text-foreground">
+              <span className="tracking-wide text-primary">TIF</span> Store
+            </span>
+          </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex space-x-10">
@@ -103,22 +101,23 @@ export default function Header() {
           </nav>
 
           {/* Desktop Right Section */}
-          <div className="hidden md:flex items-center justify-end md:flex-1 space-x-3">
-            {/* User Menu or Auth Buttons */}
-            {isAuthenticated ? (
+          <div className="hidden md:flex items-center space-x-3">
+          {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="p-0 h-8 w-8 rounded-full">
                     <Avatar className="h-8 w-8">
                       {/* <AvatarImage src={user.avatar} alt={user.name} /> */}
-                      <AvatarFallback>J</AvatarFallback>
+                      <AvatarFallback>
+                        {user?.name ? getInitials(user.name) : 'U'}
+                      </AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuLabel>
                     <div className="flex flex-col">
-                      <span>{user?.name || "jhondoe"}</span>
+                      <span>{user?.name }</span>
                       <span className="text-xs text-muted-foreground font-normal truncate">{user?.email}</span>
                     </div>
                   </DropdownMenuLabel>
@@ -141,7 +140,7 @@ export default function Header() {
               </DropdownMenu>
             ) : (
               <div className="flex space-x-3">
-                <Link href="/login">
+                <Link href="/sign-in">
                   <Button variant="ghost" size="sm" className="font-medium">
                     Masuk
                   </Button>
@@ -153,13 +152,11 @@ export default function Header() {
                 </Link>
               </div>
             )}
-            
           </div>
 
           {/* Mobile menu button */}
           <div className="flex md:hidden items-center space-x-3">
-            
-            {/* Mobile menu drawer */}
+            {/* Search toggle button could go here */}
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon">
@@ -182,19 +179,19 @@ export default function Header() {
                 {isAuthenticated ? (
                   <div className="flex items-center mb-6 p-4 bg-secondary/20 rounded-lg">
                     <Avatar className="h-10 w-10 mr-3">
-                      {/* <AvatarImage src={user.avatar} alt={user.name} /> */}
+                      <AvatarImage src={user?.image} alt={user?.name || 'User'} />
                       <AvatarFallback>
-                        { getInitials(user.name)} 
-                        </AvatarFallback>
+                        {user?.name ? getInitials(user.name) : 'U'}
+                      </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
-                      <p className="font-medium text-foreground">{user?.name || "Jhon Doe"}</p>
-                      <p className="text-sm text-muted-foreground truncate">{user?.email || "jhondoe@gmail.com"}</p>
+                      <p className="font-medium text-foreground">{user?.name || "User"}</p>
+                      <p className="text-sm text-muted-foreground truncate">{user?.email || ""}</p>
                     </div>
                   </div>
                 ) : (
                   <div className="flex space-x-2 mb-6">
-                    <Link href="/login" className="flex-1">
+                    <Link href="/sign-in" className="flex-1">
                       <Button variant="outline" className="w-full">Masuk</Button>
                     </Link>
                     <Link href="/register" className="flex-1">
@@ -224,7 +221,7 @@ export default function Header() {
                 {/* Additional Mobile Links */}
                 <div className="mt-8 pt-6 border-t">
                   <nav className="flex flex-col space-y-4">
-                    <Link href="/account" className="text-muted-foreground hover:text-foreground transition-colors">
+                    <Link href="/profile" className="text-muted-foreground hover:text-foreground transition-colors">
                       Akun Saya
                     </Link>
                     <Link href="/orders" className="text-muted-foreground hover:text-foreground transition-colors">
@@ -246,7 +243,6 @@ export default function Header() {
           </div>
         </div>
         
-
         {/* Mobile Search Bar - Full Width when active */}
         {showSearchBar && (
           <div className="md:hidden pb-4">

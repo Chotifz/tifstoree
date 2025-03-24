@@ -1,4 +1,4 @@
-import { PrismaAdapter } from "@auth/prisma-adapter";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import { compare } from "bcryptjs";
 import CredentialsProvider from "next-auth/providers/credentials";
@@ -13,10 +13,16 @@ export const authOptions = {
   },
   pages: {
     signIn: "/sign-in",
-    signOut: "/sign-out",
-    error: "/error",
+    error: "/sign-in", // Redirect back to sign-in on error
   },
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      httpOptions: {
+        timeout: 60000, // 60 seconds timeout
+      },
+    }),
     CredentialsProvider({
       name: "Credentials",
       credentials: {
@@ -32,7 +38,7 @@ export const authOptions = {
           where: { email: credentials.email },
         });
 
-        if (!user) {
+        if (!user || !user.password) {
           return null;
         }
 
@@ -52,40 +58,25 @@ export const authOptions = {
         };
       },
     }),
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      httpOptions: {
-        timeout: 60000, // Menambah timeout menjadi 60 detik
-      },
-    }),
   ],
   callbacks: {
     async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id;
-        token.role = user.role;
-        token.isVerified = user.isVerified;
+        token.role = user.role || "USER";
+        token.isVerified = user.isVerified || false;
       }
-      if (account) {
-        token.provider = account.provider;
-      }
+      
       return token;
     },
     async session({ session, token }) {
-      // if (token) {
-      //   session.user.id = token.id;
-      //   session.user.role = token.role;
-      //   session.user.isVerified = token.isVerified;
-      //   session.user.provider = token.provider;
-      // }
+      if (token) {
+        session.user.id = token.id;
+        session.user.role = token.role;
+        session.user.isVerified = token.isVerified;
+      }
       return session;
     },
   },
-  events: {
-    async signIn({ user, account }) {
-      // You can add custom logic here when a user signs in
-      console.log("User signed in:", user.email);
-    },
-  },
+  debug: process.env.NODE_ENV === "development",
 };
