@@ -1,5 +1,7 @@
 // src/app/api/games/[slug]/products/route.js
 import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(request, { params }) {
@@ -9,10 +11,8 @@ export async function GET(request, { params }) {
     
     // Get query parameters
     const categoryId = searchParams.get('categoryId');
-    const active = searchParams.get('active') === 'true' ? true : undefined;
-    const search = searchParams.get('search');
-    const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit'), 10) : undefined;
     const page = searchParams.get('page') ? parseInt(searchParams.get('page'), 10) : 1;
+    const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit'), 10) : 10;
     
     // First, find the game by slug
     const game = await prisma.game.findUnique({
@@ -27,8 +27,10 @@ export async function GET(request, { params }) {
       );
     }
     
+    // Build the query with minimal conditions
     const where = {
-      gameId: game.id
+      gameId: game.id,
+      isActive: true, // Always get active products by default
     };
     
     // Add category filter if specified
@@ -36,21 +38,8 @@ export async function GET(request, { params }) {
       where.categoryId = categoryId;
     }
     
-    // Add active filter if specified
-    if (active !== undefined) {
-      where.isActive = active;
-    }
-    
-    // Add search if provided
-    if (search) {
-      where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
-      ];
-    }
-    
     // Calculate pagination
-    const skip = limit ? (page - 1) * limit : undefined;
+    const skip = (page - 1) * limit;
     const take = limit;
     
     // Get products
@@ -76,25 +65,22 @@ export async function GET(request, { params }) {
     // Get total count for pagination
     const total = await prisma.product.count({ where });
     
-    // Create pagination data if limit is specified
-    let pagination = null;
-    if (limit) {
-      const totalPages = Math.ceil(total / limit);
-      pagination = {
-        page,
-        limit,
-        total,
-        totalPages,
-        hasNext: page < totalPages,
-        hasPrev: page > 1,
-      };
-    }
+    // Create pagination data
+    const totalPages = Math.ceil(total / limit);
+    const pagination = {
+      page,
+      limit,
+      total,
+      totalPages,
+      hasNext: page < totalPages,
+      hasPrev: page > 1,
+    };
     
     // Return response
     return NextResponse.json({
       success: true,
       products,
-      ...(pagination && { pagination }),
+      pagination,
     });
     
   } catch (error) {
@@ -105,6 +91,75 @@ export async function GET(request, { params }) {
         success: false, 
         message: 'Failed to fetch products', 
         error: error.message,
+      }, 
+      { status: 500 }
+    );
+  }
+}
+
+// For admin: Create a new product for a game
+export async function POST(request, { params }) {
+  try {
+    // Check for admin authentication
+    const session = await getServerSession(authOptions);
+    
+    if (!session || !session.user || session.user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized: Admin access required" },
+        { status: 401 }
+      );
+    }
+    
+    const { slug } = params;
+    const body = await request.json();
+    
+    // First, find the game by slug
+    const game = await prisma.game.findUnique({
+      where: { slug },
+      select: { id: true }
+    });
+    
+    if (!game) {
+      return NextResponse.json(
+        { success: false, message: 'Game not found' },
+        { status: 404 }
+      );
+    }
+    
+    // Create product data with game ID
+    const productData = {
+      ...body,
+      gameId: game.id
+    };
+    
+    // Create the product
+    const product = await prisma.product.create({
+      data: productData,
+      include: {
+        category: {
+          select: {
+            id: true,
+            name: true,
+            slug: true
+          }
+        }
+      }
+    });
+    
+    return NextResponse.json({
+      success: true,
+      message: "Product created successfully",
+      product,
+    }, { status: 201 });
+    
+  } catch (error) {
+    console.error('Error creating product:', error);
+    
+    return NextResponse.json(
+      { 
+        success: false, 
+        message: "Failed to create product", 
+        error: error.message 
       }, 
       { status: 500 }
     );

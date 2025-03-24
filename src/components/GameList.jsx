@@ -1,5 +1,3 @@
-'use client';
-
 import { useState, useMemo } from 'react';
 import { useGames } from '@/hooks/queries/useGames';
 import GameCard from '@/components/GameCard';
@@ -10,8 +8,8 @@ import { TrendingUp, Zap } from 'lucide-react';
 export default function GamesList() {
   const [activeTab, setActiveTab] = useState('all');
   
-  const { data, isLoading, isError, error } = useGames( {
-    keepPreviousData: true,
+  const { data, isLoading, isError, error } = useGames({
+    limit: 100,
   });
 
   const filteredGames = useMemo(() => {
@@ -20,7 +18,6 @@ export default function GamesList() {
     const allGames = data.games;
     
     switch (activeTab) {
-      
       case 'popular':
         return allGames.filter(game => game.isPopular);
       case 'new':

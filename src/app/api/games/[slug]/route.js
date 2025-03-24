@@ -1,15 +1,11 @@
-// src/app/api/games/[slug]/route.js
+
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { 
-
+  getGameBySlug,
   updateGame, 
   deleteGame,
-  toggleGameFeatured,
-  toggleGamePopular,
-  toggleGameNew,
-  getGameBySlug
 } from '@/services/product/game.service';
 import { z } from 'zod';
 
@@ -61,8 +57,7 @@ export async function GET(request, { params }) {
   }
 }
 
-
-export async function PUT(request, { params }) {
+export async function PATCH(request, { params }) {
   try {
     const session = await checkedUser();
     if (session instanceof NextResponse) return session;
@@ -70,6 +65,46 @@ export async function PUT(request, { params }) {
     const { slug } = params;
     const body = await request.json();
     
+    // Get action from query params if present
+    const { searchParams } = new URL(request.url);
+    const action = searchParams.get('action');
+    
+    // Handle special actions
+    if (action) {
+      switch (action) {
+        case 'toggleFeatured':
+          const featuredGame = await updateGame(slug, {
+            isFeatured: !body.isFeatured
+          });
+          return NextResponse.json({
+            success: true,
+            message: "Game featured status updated",
+            game: featuredGame,
+          });
+          
+        case 'togglePopular':
+          const popularGame = await updateGame(slug, {
+            isPopular: !body.isPopular
+          });
+          return NextResponse.json({
+            success: true,
+            message: "Game popular status updated",
+            game: popularGame,
+          });
+          
+        case 'toggleNew':
+          const newGame = await updateGame(slug, {
+            isNew: !body.isNew
+          });
+          return NextResponse.json({
+            success: true,
+            message: "Game new status updated",
+            game: newGame,
+          });
+      }
+    }
+    
+    // Validate request body for regular updates
     const gameSchema = z.object({
       name: z.string().min(1, { message: "Name is required" }).optional(),
       slug: z.string().optional(),
@@ -100,6 +135,7 @@ export async function PUT(request, { params }) {
       );
     }
     
+    // Update the game
     const game = await updateGame(slug, result.data);
     
     return NextResponse.json({
@@ -171,61 +207,6 @@ export async function DELETE(request, { params }) {
       { 
         success: false, 
         message: "Failed to delete game", 
-        error: error.message 
-      }, 
-      { status: 500 }
-    );
-  }
-}
-
-export async function PATCH(request, { params }) {
-  try {
-    const session = await checkedUser();
-    if (session instanceof NextResponse) return session;
-    
-    const { slug } = params;
-    const { searchParams } = new URL(request.url);
-    const action = searchParams.get('action');
-    
-    let game;
-    
-    switch (action) {
-      case 'toggleFeatured':
-        game = await toggleGameFeatured(slug);
-        break;
-      case 'togglePopular':
-        game = await toggleGamePopular(slug);
-        break;
-      case 'toggleNew':
-        game = await toggleGameNew(slug);
-        break;
-      default:
-        return NextResponse.json(
-          { success: false, message: "Invalid action" },
-          { status: 400 }
-        );
-    }
-    
-    return NextResponse.json({
-      success: true,
-      message: `Game ${action.replace('toggle', '')} status updated`,
-      game,
-    });
-    
-  } catch (error) {
-    console.error('Error updating game status:', error);
-    
-    if (error.message === 'Game not found') {
-      return NextResponse.json(
-        { success: false, message: 'Game not found' },
-        { status: 404 }
-      );
-    }
-    
-    return NextResponse.json(
-      { 
-        success: false, 
-        message: "Failed to update game status", 
         error: error.message 
       }, 
       { status: 500 }

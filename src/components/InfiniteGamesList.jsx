@@ -1,6 +1,5 @@
-'use client';
-
-import { useState, useEffect } from 'react';
+// src/components/InfiniteGamesList.jsx - with client-side filtering
+import { useState, useEffect, useMemo } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { useInfiniteGames } from '@/hooks/queries/useGames';
 import GameCard from '@/components/GameCard';
@@ -19,16 +18,7 @@ export default function InfiniteGamesList() {
   // Setup intersection observer for infinite scrolling
   const { ref, inView } = useInView();
   
-  // Define query parameters based on active tab
-  const queryParams = {
-    featured: activeTab === 'featured',
-    popular: activeTab === 'popular',
-    isNew: activeTab === 'new',
-    search: searchTerm,
-    limit: 12,
-  };
-  
-  // Fetch games using React Query with infinite scrolling
+  // Fetch games with infinite scrolling - no filters in API call
   const { 
     data, 
     isLoading, 
@@ -37,7 +27,7 @@ export default function InfiniteGamesList() {
     fetchNextPage, 
     hasNextPage, 
     isFetchingNextPage 
-  } = useInfiniteGames(queryParams);
+  } = useInfiniteGames({ limit: 24 });
   
   // Fetch next page when scrolled to bottom
   useEffect(() => {
@@ -46,21 +36,52 @@ export default function InfiniteGamesList() {
     }
   }, [inView, fetchNextPage, hasNextPage, isFetchingNextPage]);
   
+  // Client-side search handler
   const handleSearch = (e) => {
     e.preventDefault();
-    // The search will be triggered automatically by the useInfiniteGames hook
+    // We'll just update the search term state, filtering happens in useMemo
   };
   
+  // Handle tab changes
   const handleTabChange = (value) => {
     setActiveTab(value);
   };
   
+  // Clear search
   const handleClearSearch = () => {
     setSearchTerm('');
   };
   
   // Flatten all pages of games data
   const allGames = data?.pages.flatMap(page => page.games) || [];
+  
+  // Client-side filtering based on tab and search
+  const filteredGames = useMemo(() => {
+    if (!allGames.length) return [];
+    
+    // First filter by search term
+    let filtered = allGames;
+    if (searchTerm) {
+      const search = searchTerm.toLowerCase();
+      filtered = filtered.filter(game => 
+        game.name.toLowerCase().includes(search) || 
+        (game.shortDescription && game.shortDescription.toLowerCase().includes(search)) ||
+        (game.developerName && game.developerName.toLowerCase().includes(search))
+      );
+    }
+    
+    // Then filter by tab
+    switch (activeTab) {
+      case 'featured':
+        return filtered.filter(game => game.isFeatured);
+      case 'popular':
+        return filtered.filter(game => game.isPopular);
+      case 'new':
+        return filtered.filter(game => game.isNew);
+      default:
+        return filtered;
+    }
+  }, [allGames, activeTab, searchTerm]);
   
   // Render loading state
   if (isLoading && !data) {
@@ -197,7 +218,7 @@ export default function InfiniteGamesList() {
           </div>
         )}
         
-        {allGames.length === 0 ? (
+        {filteredGames.length === 0 ? (
           <div className="text-center py-12 border-2 border-dashed rounded-lg">
             <p className="text-muted-foreground">No games found</p>
             {searchTerm && (
@@ -209,13 +230,13 @@ export default function InfiniteGamesList() {
         ) : (
           <>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {allGames.map((game) => (
+              {filteredGames.map((game) => (
                 <GameCard key={game.id} game={game} />
               ))}
             </div>
             
-            {/* Loading indicator for infinite scroll */}
-            {(hasNextPage || isFetchingNextPage) && (
+            {/* Loading indicator for infinite scroll - only show if in the "all" tab with no search */}
+            {(activeTab === 'all' && !searchTerm && (hasNextPage || isFetchingNextPage)) && (
               <div ref={ref} className="flex justify-center items-center py-6">
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 w-full">
                   {Array.from({ length: 6 }).map((_, index) => (
@@ -232,7 +253,7 @@ export default function InfiniteGamesList() {
             )}
             
             {/* Show when there are no more games to load */}
-            {!hasNextPage && allGames.length > 0 && (
+            {!hasNextPage && activeTab === 'all' && !searchTerm && (
               <div className="text-center py-6 text-muted-foreground">
                 <p>No more games to load</p>
               </div>

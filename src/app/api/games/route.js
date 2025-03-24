@@ -9,19 +9,10 @@ export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     
-    const featured = searchParams.get('featured') === 'true';
-    const popular = searchParams.get('popular') === 'true';
-    const isNew = searchParams.get('new') === 'true';
-    const search = searchParams.get('search') || '';
-    
     const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = parseInt(searchParams.get('limit') || '10', 10);
 
     const result = await getGames({
-      featured: searchParams.has('featured') ? featured : undefined,
-      popular: searchParams.has('popular') ? popular : undefined,
-      isNew: searchParams.has('new') ? isNew : undefined,
-      search,
       page,
       limit,
     });

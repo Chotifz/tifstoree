@@ -55,6 +55,9 @@ export const authOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      httpOptions: {
+        timeout: 60000, // Menambah timeout menjadi 60 detik
+      },
     }),
   ],
   callbacks: {
@@ -70,12 +73,12 @@ export const authOptions = {
       return token;
     },
     async session({ session, token }) {
-      if (token) {
-        session.user.id = token.id;
-        session.user.role = token.role;
-        session.user.isVerified = token.isVerified;
-        session.user.provider = token.provider;
-      }
+      // if (token) {
+      //   session.user.id = token.id;
+      //   session.user.role = token.role;
+      //   session.user.isVerified = token.isVerified;
+      //   session.user.provider = token.provider;
+      // }
       return session;
     },
   },
