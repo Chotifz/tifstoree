@@ -6,7 +6,7 @@ async function updateUser(userData) {
   const { id, ...data } = userData;
   
   try {
-    const response = await axios.put(`/api/users/${id}`, data);
+    const response = await axios.patch(`/api/users/${id}`, data);
     return response.data;
   } catch (error) {
     throw new Error(
@@ -16,7 +16,6 @@ async function updateUser(userData) {
   }
 }
 
-// Delete user function
 async function deleteUser(userId) {
   try {
     const response = await axios.delete(`/api/users/${userId}`);
@@ -29,7 +28,6 @@ async function deleteUser(userId) {
   }
 }
 
-// Create user function
 async function createUser(userData) {
   try {
     const response = await axios.post('/api/auth/register', userData);
@@ -63,7 +61,7 @@ export function useDeleteUser() {
   return useMutation({
     mutationFn: deleteUser,
     onSuccess: () => {
-      // Invalidate the users list
+      
       queryClient.invalidateQueries(['users']);
     },
   });

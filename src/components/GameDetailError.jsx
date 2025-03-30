@@ -1,3 +1,7 @@
+import { AlertTriangle, ChevronLeft } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
+import { Button } from "./ui/button";
+
 function GameDetailError() {
     return ( <div className="max-w-7xl mx-auto py-10 px-4 text-center">
         <Alert variant="destructive" className="mx-auto max-w-md">

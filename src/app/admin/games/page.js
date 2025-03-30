@@ -6,7 +6,6 @@ import {
   Plus, 
   Edit, 
   Trash2, 
-  ChevronDown, 
   FilterX,
   GamepadIcon,
   MoreHorizontal,
@@ -63,6 +62,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import Image from 'next/image';
 
 export default function AdminGamesPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -521,7 +521,7 @@ export default function AdminGamesPage() {
                     className="min-h-32"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Detailed description displayed on the game's detail page.
+                    Detailed description displayed on the games detail page.
                   </p>
                 </div>
               </TabsContent>
@@ -533,7 +533,7 @@ export default function AdminGamesPage() {
                     <div className="border-2 border-dashed rounded-lg p-4 text-center">
                       <div className="mx-auto w-32 h-32 rounded-lg bg-muted flex items-center justify-center mb-4">
                         {formData.icon ? (
-                          <img 
+                          <Image 
                             src={formData.icon} 
                             alt="Game icon" 
                             className="h-full w-full object-cover rounded-lg"
@@ -556,7 +556,7 @@ export default function AdminGamesPage() {
                     <div className="border-2 border-dashed rounded-lg p-4 text-center">
                       <div className="mx-auto w-full h-32 rounded-lg bg-muted flex items-center justify-center mb-4">
                         {formData.banner ? (
-                          <img 
+                          <Image 
                             src={formData.banner} 
                             alt="Game banner" 
                             className="h-full w-full object-cover rounded-lg"

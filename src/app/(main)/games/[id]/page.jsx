@@ -5,8 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { 
-  ChevronLeft, Info, AlertTriangle, User, Hash, Shield, 
-  CheckCircle, CreditCard, Clock, TrendingUp
+  ChevronLeft,User, Hash, Shield, 
+  CheckCircle, CreditCard, Clock, 
 } from 'lucide-react';
 
 // ShadCN Components
@@ -29,16 +29,7 @@ import GameDetailError from '@/components/GameDetailError';
 import GameDetailBanner from '@/components/games-detail/GameDetailBanner';
 import HeaderGameDetail from '@/components/games-detail/HeaderGameDetail';
 import HowToTopUp from '@/components/games-detail/HowToTopUpCard';
-
-// Fungsi bantuan untuk memformat harga
-const formatPrice = (price) => {
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  }).format(price);
-};
+import { formatPrice } from '@/lib/utils';
 
 export default function GameDetail() {
   const params = useParams();
@@ -72,7 +63,6 @@ export default function GameDetail() {
   
   // Fetch products for the active category
 
-   // Fetch products for the active category
    const { 
     data: productsData, 
     isLoading: isProductsLoading, 
@@ -151,17 +141,29 @@ export default function GameDetail() {
     return Object.keys(errors).length === 0;
   }, [selectedProduct, gameFormFields, paymentMethod, email]);
   
-  // Proceed to payment
   const handleCheckout = async () => {
-    if (!validateInputs()) return;
-    
+    // if (!validateInputs()) return;
+   
+
     try {
-      // Show loading toast
+      const data = {
+        id: selectedProduct.id,
+        productName: selectedProduct.name,
+        price: selectedProduct.discountPrice || selectedProduct.price,
+        quantity: 1
+      }
+
       toast.loading("Memproses pesanan...");
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
+    
+       const response = await fetch('/api/midtrans/token', {
+        method: 'POST',
+        body: JSON.stringify(data)
+       })
+
+       
+       const requestData = await response.json();
+      window.snap.pay(requestData)
+      console.log(requestData)
       // Redirect to checkout/payment page
       // In a real app: router.push(`/checkout/${orderNumber}`);
       
@@ -169,9 +171,9 @@ export default function GameDetail() {
       toast.success("Pesanan berhasil! Anda akan dialihkan ke halaman pembayaran");
       
       // Simulate redirect
-      setTimeout(() => {
-        router.push('/');
-      }, 2000);
+      // setTimeout(() => {
+      //   router.push('/');
+      // }, 2000);
       
     } catch (error) {
       console.error('Checkout error:', error);
@@ -208,46 +210,17 @@ export default function GameDetail() {
 
   return (
     <div className="bg-background min-h-screen">
-      {/* <GameDetailBanner game={game}/>  */}
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        {/* Back button */}
-        <div className="mb-6">
-          <Button 
-            variant="ghost" 
-            className="text-muted-foreground hover:text-foreground"
-            asChild
-          >
-            <Link href="/">
-              <ChevronLeft className="mr-1 h-4 w-4" /> Kembali ke beranda
-            </Link>
-          </Button>
-        </div>
-  
-        <HeaderGameDetail game={game} />
-        
+        <HeaderGameDetail game={game} />      
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - How to top up, ID input, Product selection */}
           <div className="lg:col-span-2 space-y-6">
-            {/* How to top up */}
             <HowToTopUp game={game} />
-            
             {/* ID Input card */}
             <Card className="border-border/40">
               <CardContent className="p-6">
                 <h2 className="text-lg font-semibold mb-2">1. Masukkan ID Game</h2>
                 
-                {/* Instruction text if available */}
-                {getInstructionText() && (
-                  <Alert className="mb-4 bg-muted/50 border-primary/20">
-                    <Info className="h-4 w-4 text-primary" />
-                    <AlertDescription className="text-sm">
-                      {getInstructionText()}
-                    </AlertDescription>
-                  </Alert>
-                )}
-                
                 <div className="space-y-4">
-                  {/* Dynamically generate form fields based on required fields */}
                   {Object.keys(gameFormFields).map(field => {
                     // Format field label for display
                     const formattedFieldName = field
@@ -524,8 +497,6 @@ export default function GameDetail() {
                       </span>
                     </div>
                   </div>
-                  
-                  {/* Checkout button */}
                   <Button 
                     className="w-full" 
                     size="lg"
@@ -535,8 +506,6 @@ export default function GameDetail() {
                     <CreditCard className="mr-2 h-4 w-4" />
                     Bayar Sekarang
                   </Button>
-
-                  {/* Security notice */}
                   <div className="mt-4">
                     <div className="flex items-center justify-center text-muted-foreground text-xs mb-2">
                       <Shield className="h-3 w-3 mr-1" />

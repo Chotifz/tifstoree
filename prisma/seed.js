@@ -1,4 +1,3 @@
-// prisma/seed.js
 import { PrismaClient } from '@prisma/client';
 import { bannersRes, categoriesRes, gamesRes, ordersRes, productsRes } from '../src/config/dummy-data.js';
 

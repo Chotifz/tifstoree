@@ -1,8 +1,7 @@
-// src/app/api/users/[id]/route.js
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { getUserById, updateUser, updateUserRole, isLastAdminUser } from '@/services/user/user.service';
+import { getUserById, updateUser, updateUserRole, isLastAdminUser, deleteUser } from '@/services/user/user.service';
 import { z } from 'zod';
 
 export async function GET(request, { params }) {
@@ -28,10 +27,9 @@ export async function GET(request, { params }) {
       );
     }
     
-    // Use the service method with secure fields parameter based on role
+  
     const user = await getUserById(id, isAdmin);
     
-    // Return user data
     return NextResponse.json({
       success: true,
       user,
@@ -58,9 +56,11 @@ export async function GET(request, { params }) {
   }
 }
 
-export async function PUT(request, { params }) {
+export async function PATCH(request, { params }) {
   try {
    
+    const { id } = await params;
+    
     const session = await getServerSession(authOptions);
     
     if (!session || !session.user) {
@@ -69,8 +69,6 @@ export async function PUT(request, { params }) {
         { status: 401 }
       );
     }
-    
-    const { id } = params;
     
     const isAdmin = session.user.role === 'ADMIN';
     const isSelfUpdate = session.user.id === id;
@@ -82,10 +80,8 @@ export async function PUT(request, { params }) {
       );
     }
     
-    // Parse request body
     const body = await request.json();
     
-    // Define validation schema
     const userUpdateSchema = z.object({
       name: z.string().min(2).optional(),
       phone: z.string().optional(),
@@ -94,7 +90,6 @@ export async function PUT(request, { params }) {
       role: z.enum(['USER', 'ADMIN', 'RESELLER']).optional(),
     });
     
-    // Validate request data
     const result = userUpdateSchema.safeParse(body);
     
     if (!result.success) {
@@ -111,7 +106,6 @@ export async function PUT(request, { params }) {
     let updatedUser;
     
     if (result.data.role && isAdmin) {
-      // Check if trying to update the role of the last admin
       if (id !== session.user.id && result.data.role !== 'ADMIN') {
         const wouldRemoveLastAdmin = await isLastAdminUser(id, result.data.role);
         
@@ -125,12 +119,10 @@ export async function PUT(request, { params }) {
       
       updatedUser = await updateUserRole(id, result.data.role);
     } else {
-      // Remove role from data if it exists and user is not admin
       const { role, ...updateData } = result.data;
       updatedUser = await updateUser(id, updateData);
     }
     
-    // Return updated user
     return NextResponse.json({
       success: true,
       message: "User updated successfully",
@@ -151,6 +143,68 @@ export async function PUT(request, { params }) {
       { 
         success: false, 
         message: "Failed to update user", 
+        error: error.message 
+      }, 
+      { status: 500 }
+    );
+  }
+}
+export async function DELETE(request, { params }) {
+  try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session || !session.user) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+    
+    if (session.user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { success: false, message: "Forbidden: Admin access required" },
+        { status: 403 }
+      );
+    }
+    
+    const { id } = params;
+    
+    if (session.user.id === id) {
+      return NextResponse.json(
+        { success: false, message: "Cannot delete your own account" },
+        { status: 400 }
+      );
+    }
+    
+    const wouldRemoveLastAdmin = await isLastAdminUser(id, "USER");
+    if (wouldRemoveLastAdmin) {
+      return NextResponse.json(
+        { success: false, message: "Cannot delete the last admin user" },
+        { status: 400 }
+      );
+    }
+    
+    await deleteUser(id);
+    
+    return NextResponse.json({
+      success: true,
+      message: "User deleted successfully"
+    });
+    
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    
+    if (error.message === "User not found") {
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: 404 }
+      );
+    }
+    
+    return NextResponse.json(
+      { 
+        success: false, 
+        message: "Failed to delete user", 
         error: error.message 
       }, 
       { status: 500 }

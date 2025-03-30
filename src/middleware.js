@@ -16,7 +16,7 @@ const publicPaths = [
 ];
 
 const adminPaths = [
-  '/dashboard/admin',
+
   '/admin/(.*)',
   // '/api/admin/(.*)',
 ];

@@ -1,23 +1,23 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { getUsers } from '@/services/user/user.service';
+import {  getUsers } from '@/services/user/user.service';
 
 export async function GET(request) {
   try {
-    // const session = await getServerSession(authOptions);
-    // if (!session || !session.user) {
-    //   return NextResponse.json(
-    //     { success: false, message: "Unauthorized" },
-    //     { status: 401 }
-    //   );
-    // }
-    // if (session.user.role !== 'ADMIN') {
-    //   return NextResponse.json(
-    //     { success: false, message: "Forbidden" },
-    //     { status: 403 }
-    //   );
-    // }
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+    if (session.user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { success: false, message: "Forbidden" },
+        { status: 403 }
+      );
+    }
     
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1', 10);
@@ -46,3 +46,4 @@ export async function GET(request) {
     );
   }
 }
+

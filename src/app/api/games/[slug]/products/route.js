@@ -3,10 +3,14 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { 
+  getProductsByGame, 
+  createProduct 
+} from '@/services/product/product.service';
 
 export async function GET(request, { params }) {
   try {
-    const { slug } = params;
+    const { slug } = await params;
     const { searchParams } = new URL(request.url);
     
     // Get query parameters
@@ -14,7 +18,7 @@ export async function GET(request, { params }) {
     const page = searchParams.get('page') ? parseInt(searchParams.get('page'), 10) : 1;
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit'), 10) : 10;
     
-    // First, find the game by slug
+    // Find the game by slug
     const game = await prisma.game.findUnique({
       where: { slug },
       select: { id: true }
@@ -27,54 +31,12 @@ export async function GET(request, { params }) {
       );
     }
     
-    // Build the query with minimal conditions
-    const where = {
-      gameId: game.id,
-      isActive: true, // Always get active products by default
-    };
-    
-    // Add category filter if specified
-    if (categoryId) {
-      where.categoryId = categoryId;
-    }
-    
-    // Calculate pagination
-    const skip = (page - 1) * limit;
-    const take = limit;
-    
-    // Get products
-    const products = await prisma.product.findMany({
-      where,
-      include: {
-        category: {
-          select: {
-            id: true,
-            name: true,
-            slug: true
-          }
-        }
-      },
-      orderBy: [
-        { sorting: 'asc' },
-        { name: 'asc' }
-      ],
-      skip,
-      take,
-    });
-    
-    // Get total count for pagination
-    const total = await prisma.product.count({ where });
-    
-    // Create pagination data
-    const totalPages = Math.ceil(total / limit);
-    const pagination = {
+    // Use the service to get products
+    const { products, pagination } = await getProductsByGame(game.id, {
+      categoryId,
       page,
-      limit,
-      total,
-      totalPages,
-      hasNext: page < totalPages,
-      hasPrev: page > 1,
-    };
+      limit
+    });
     
     // Return response
     return NextResponse.json({
@@ -97,10 +59,9 @@ export async function GET(request, { params }) {
   }
 }
 
-// For admin: Create a new product for a game
 export async function POST(request, { params }) {
   try {
-    // Check for admin authentication
+    // Check admin authentication
     const session = await getServerSession(authOptions);
     
     if (!session || !session.user || session.user.role !== 'ADMIN') {
@@ -113,7 +74,7 @@ export async function POST(request, { params }) {
     const { slug } = params;
     const body = await request.json();
     
-    // First, find the game by slug
+    // Find the game by slug
     const game = await prisma.game.findUnique({
       where: { slug },
       select: { id: true }
@@ -126,24 +87,10 @@ export async function POST(request, { params }) {
       );
     }
     
-    // Create product data with game ID
-    const productData = {
+    // Use the service to create a product
+    const product = await createProduct({
       ...body,
       gameId: game.id
-    };
-    
-    // Create the product
-    const product = await prisma.product.create({
-      data: productData,
-      include: {
-        category: {
-          select: {
-            id: true,
-            name: true,
-            slug: true
-          }
-        }
-      }
     });
     
     return NextResponse.json({

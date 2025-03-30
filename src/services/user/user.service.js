@@ -231,12 +231,6 @@ export async function countUsersByRole() {
   };
 }
 
-/**
- * Check if this is the last admin user
- * @param {string} userId - The user ID to check
- * @param {string} newRole - The new role being assigned
- * @returns {Promise<boolean>} True if operation would remove last admin
- */
 export async function isLastAdminUser(userId, newRole) {
   // If the new role is still ADMIN, no need to check
   if (newRole === 'ADMIN') {
@@ -258,8 +252,23 @@ export async function isLastAdminUser(userId, newRole) {
   const adminCount = await prisma.user.count({
     where: { role: 'ADMIN' },
   });
-  
-  // If there's only one admin and we're changing their role,
-  // this would remove the last admin
+ 
   return adminCount <= 1;
+}
+
+export async function deleteUser(id) {
+ const user = await prisma.user.findUnique({
+   where: { id },
+   select: { id: true, email: true }
+ });
+ 
+ if (!user) {
+   throw new Error("User not found");
+ }
+
+ const deletedUser = await prisma.user.delete({
+   where: { id }
+ });
+ 
+ return deletedUser;
 }

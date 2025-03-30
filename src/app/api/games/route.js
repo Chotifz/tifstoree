@@ -1,4 +1,3 @@
-// src/app/api/games/route.js
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -57,7 +56,6 @@ export async function POST(request) {
       description: z.string().optional(),
       shortDescription: z.string().optional(),
       developerName: z.string().optional(),
-      publisherName: z.string().optional(),
       icon: z.string().optional(),
       banner: z.string().optional(),
       bannerTitle: z.string().optional(),

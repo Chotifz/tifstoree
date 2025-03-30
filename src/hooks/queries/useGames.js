@@ -71,18 +71,18 @@ export function useGameById(slug, includeCategories = true, queryOptions = {}) {
   });
 }
 
-export function useGameProducts(gameSlug, params = {}, queryOptions = {}) {
+export function useGameProducts(gameSlug, id, params = {}, queryOptions = {}) {
   const { categoryId, limit, page } = params;
   
   return useQuery({
-    queryKey: ['gameProducts', gameSlug, { categoryId, limit, page }],
+    queryKey: ['gameProducts', gameSlug, id, { categoryId, limit, page }],
     queryFn: async () => {
       const queryParams = new URLSearchParams();
       if (categoryId) queryParams.append('categoryId', categoryId);
       if (limit) queryParams.append('limit', limit);
       if (page) queryParams.append('page', page);
       
-      const response = await fetch(`/api/games/${gameSlug}/products?${queryParams}`);
+      const response = await fetch(`/api/games/${gameSlug}/products/${id}`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch products');

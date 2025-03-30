@@ -6,7 +6,6 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET(request) {
   try {
-    // Get session from NextAuth
     const session = await getServerSession(authOptions);
     
     if (!session || !session.user) {
@@ -15,8 +14,7 @@ export async function GET(request) {
         { status: 401 }
       );
     }
-    
-    // Get user data from database
+
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: {
@@ -39,7 +37,6 @@ export async function GET(request) {
       );
     }
     
-    // Return user data
     return NextResponse.json({
       success: true,
       user,

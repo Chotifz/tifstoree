@@ -51,7 +51,6 @@ model Game {
   bannerTitle      String?
   bannerSubtitle   String?
   developerName    String?
-  publisherName    String?
   isPopular        Boolean       @default(false)
   isFeatured       Boolean       @default(false)
   isNew            Boolean       @default(false)
@@ -87,10 +86,6 @@ model Product {
   price           Float
   discountPrice   Float?
   sku             String?    @unique
-  isActive        Boolean    @default(true)
-  isFeatured      Boolean    @default(false)
-  isPopular       Boolean    @default(false)
-  isNew           Boolean    @default(false)
   sorting         Int        @default(0)
   stock           Int?       // Null untuk unlimited
   categoryId      String

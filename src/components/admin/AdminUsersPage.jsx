@@ -93,8 +93,6 @@ export default function AdminUsersPage() {
     roleFilter: roleFilter !== 'all' ? roleFilter : undefined,
   });
 
-  // User mutations
-  const createUser = useCreateUser();
   const updateUser = useUpdateUser();
   const deleteUser = useDeleteUser();
 
@@ -153,20 +151,15 @@ export default function AdminUsersPage() {
     setIsDeleteDialogOpen(true);
   };
 
-  // Submit form handler
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     try {
       if (selectedUser) {
-        // Updating existing user
+       
         await updateUser.mutateAsync(formData);
         toast.success("User updated successfully");
-      } else {
-        // Creating new user
-        await createUser.mutateAsync(formData);
-        toast.success("User created successfully");
-      }
+      } 
       setIsUserDialogOpen(false);
       refetch();
     } catch (error) {
@@ -174,7 +167,6 @@ export default function AdminUsersPage() {
     }
   };
 
-  // Delete user handler
   const handleDeleteUser = async () => {
     try {
       await deleteUser.mutateAsync(selectedUser.id);
@@ -186,7 +178,6 @@ export default function AdminUsersPage() {
     }
   };
 
-  // Get role badge styling
   const getRoleBadge = (role) => {
     switch (role) {
       case 'ADMIN':
@@ -194,13 +185,6 @@ export default function AdminUsersPage() {
           <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/30">
             <Shield className="h-3 w-3 mr-1" />
             Admin
-          </Badge>
-        );
-      case 'RESELLER':
-        return (
-          <Badge variant="secondary" className="bg-amber-100 text-amber-700 dark:bg-amber-700/20 dark:text-amber-400">
-            <UserPlus className="h-3 w-3 mr-1" />
-            Reseller
           </Badge>
         );
       default:
@@ -217,10 +201,6 @@ export default function AdminUsersPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold tracking-tight">User Management</h1>
-        <Button onClick={openCreateDialog}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add User
-        </Button>
       </div>
 
       <Card className="border-border/40">
@@ -319,12 +299,6 @@ export default function AdminUsersPage() {
               <Button variant="outline" className="mt-2" onClick={() => refetch()}>
                 Retry
               </Button>
-            </div>
-          ) : data?.users?.length === 0 ? (
-            <div className="text-center py-12 border-2 border-dashed rounded-lg">
-              <UserPlus className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground mb-2">No users found</p>
-              <Button onClick={openCreateDialog}>Add your first user</Button>
             </div>
           ) : (
             <Table>
@@ -450,11 +424,9 @@ export default function AdminUsersPage() {
       <Dialog open={isUserDialogOpen} onOpenChange={setIsUserDialogOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>{selectedUser ? 'Edit User' : 'Create New User'}</DialogTitle>
+            <DialogTitle>Edit User</DialogTitle>
             <DialogDescription>
-              {selectedUser 
-                ? 'Update user information and role.' 
-                : 'Fill in the information to create a new user.'}
+             Update user information and role.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit}>
@@ -507,19 +479,7 @@ export default function AdminUsersPage() {
                   </SelectContent>
                 </Select>
               </div>
-              {!selectedUser && (
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    name="password"
-                    type="password"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    placeholder="Min. 8 characters"
-                  />
-                </div>
-              )}
+              
             </div>
             <DialogFooter>
               <Button 
@@ -530,7 +490,7 @@ export default function AdminUsersPage() {
                 Cancel
               </Button>
               <Button type="submit">
-                {selectedUser ? 'Update User' : 'Create User'}
+              Update User
               </Button>
             </DialogFooter>
           </form>

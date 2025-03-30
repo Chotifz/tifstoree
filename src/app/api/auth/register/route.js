@@ -1,4 +1,3 @@
-// src/app/api/auth/register/route.js
 import { NextResponse } from 'next/server';
 import { registerUser } from '@/services/auth/auth.service';
 import { z } from 'zod';
@@ -13,10 +12,8 @@ const registerSchema = z.object({
 
 export async function POST(request) {
   try {
-    // Parse request body
     const body = await request.json();
-    
-    // Validate request data
+   
     const result = registerSchema.safeParse(body);
     
     if (!result.success) {
@@ -29,11 +26,9 @@ export async function POST(request) {
         { status: 400 }
       );
     }
-    
-    // Register the user
+ 
     const user = await registerUser(result.data);
     
-    // Return successful response
     return NextResponse.json({
       success: true,
       message: "Registration successful",
@@ -43,7 +38,6 @@ export async function POST(request) {
   } catch (error) {
     console.error("Registration error:", error);
     
-    // Handle known errors
     if (error.message === "Email already registered") {
       return NextResponse.json(
         { success: false, message: error.message },
@@ -51,7 +45,6 @@ export async function POST(request) {
       );
     }
     
-    // Handle other errors
     return NextResponse.json(
       { 
         success: false, 

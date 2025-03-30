@@ -6,6 +6,7 @@ import { useTheme } from 'next-themes';
 import { useState, useEffect } from 'react';
 import { Moon, Sun } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import Image from 'next/image';
 
 export default function Footer() {
   const { theme, setTheme } = useTheme();
@@ -58,31 +59,31 @@ export default function Footer() {
               <h4 className="font-semibold mb-3 text-primary">Metode Pembayaran</h4>
               <div className="grid grid-cols-3 gap-2 mt-3">
                 <div className="bg-white rounded p-1">
-                  <img src="/images/method/dana.png" alt="DANA" className="h-6 object-contain" />
+                  <Image width={40} height={40} src="/images/method/dana.png" alt="DANA" className="h-6 object-contain" />
                 </div>
                 <div className="bg-white rounded p-1">
-                  <img src="/images/method/ovo.png" alt="OVO" className="h-6 object-contain" />
+                  <Image width={40} height={40} src="/images/method/ovo.png" alt="OVO" className="h-6 object-contain" />
                 </div>
                 <div className="bg-white rounded p-1">
-                  <img src="/images/method/gopay.png" alt="GoPay" className="h-6 object-contain" />
+                  <Image width={40} height={40} src="/images/method/gopay.png" alt="GoPay" className="h-6 object-contain" />
                 </div>
                 <div className="bg-white rounded p-1">
-                  <img src="/images/method/qbri2.png" alt="BRI" className="h-6 object-contain" />
+                  <Image width={40} height={40} src="/images/method/qbri2.png" alt="BRI" className="h-6 object-contain" />
                 </div>
                 <div className="bg-white rounded p-1">
-                  <img src="/images/method/qqris.jpg" alt="QRIS" className="h-6 object-contain" />
+                  <Image width={40} height={40} src="/images/method/qqris.jpg" alt="QRIS" className="h-6 object-contain" />
                 </div>
                 <div className="bg-white rounded p-1">
-                  <img src="/images/method/bca.png" alt="BCA" className="h-6 object-contain" />
+                  <Image width={40} height={40} src="/images/method/bca.png" alt="BCA" className="h-6 object-contain" />
                 </div>
                 <div className="bg-white rounded p-1">
-                  <img src="/images/method/mandiri.png" alt="Mandiri" className="h-6 object-contain" />
+                  <Image width={40} height={40} src="/images/method/mandiri.png" alt="Mandiri" className="h-6 object-contain" />
                 </div>
                 <div className="bg-white rounded p-1">
-                  <img src="/images/method/linkaja2.png" alt="LinkAja" className="h-6 object-contain" />
+                  <Image width={40} height={40} src="/images/method/linkaja2.png" alt="LinkAja" className="h-6 object-contain" />
                 </div>
                 <div className="bg-white rounded p-1">
-                  <img src="/images/method/shopeepay.png" alt="ShopeePay" className="h-6 object-contain" />
+                  <Image width={40} height={40} src="/images/method/shopeepay.png" alt="ShopeePay" className="h-6 object-contain" />
                 </div>
               </div>
             </div>

@@ -3,27 +3,11 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-
-// Admin access check
-const checkAdminAccess = async () => {
-  const session = await getServerSession(authOptions);
-  
-  if (!session || !session.user) {
-    return { isAdmin: false, error: NextResponse.json(
-      { success: false, message: "Unauthorized" },
-      { status: 401 }
-    )};
-  }
-  
-  if (session.user.role !== 'ADMIN') {
-    return { isAdmin: false, error: NextResponse.json(
-      { success: false, message: "Forbidden: Admin access required" },
-      { status: 403 }
-    )};
-  }
-  
-  return { isAdmin: true, session };
-};
+import { 
+  getProductById, 
+  updateProduct, 
+  deleteProduct 
+} from '@/services/product/product.service';
 
 // Get product by ID
 export async function GET(request, { params }) {
@@ -43,34 +27,23 @@ export async function GET(request, { params }) {
       );
     }
     
-    // Find the product
-    const product = await prisma.product.findUnique({
-      where: { 
-        id,
-        gameId: game.id // Ensuring the product belongs to the game
-      },
-      include: {
-        category: {
-          select: {
-            id: true,
-            name: true,
-            slug: true
-          }
-        }
+    try {
+      // Use the service to get the product
+      const product = await getProductById(id, game.id);
+      
+      return NextResponse.json({
+        success: true,
+        product,
+      });
+    } catch (error) {
+      if (error.message === 'Product not found') {
+        return NextResponse.json(
+          { success: false, message: 'Product not found' },
+          { status: 404 }
+        );
       }
-    });
-    
-    if (!product) {
-      return NextResponse.json(
-        { success: false, message: 'Product not found' },
-        { status: 404 }
-      );
+      throw error;
     }
-    
-    return NextResponse.json({
-      success: true,
-      product,
-    });
     
   } catch (error) {
     console.error('Error fetching product:', error);
@@ -89,16 +62,18 @@ export async function GET(request, { params }) {
 // Update product by ID
 export async function PATCH(request, { params }) {
   try {
-    // Check admin access
-    const { isAdmin, error } = await checkAdminAccess();
-    if (!isAdmin) return error;
+    // Check admin authentication
+    const session = await getServerSession(authOptions);
+    
+    if (!session || !session.user || session.user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized: Admin access required" },
+        { status: 401 }
+      );
+    }
     
     const { slug, id } = params;
     const body = await request.json();
-    
-    // Check for special actions
-    const { searchParams } = new URL(request.url);
-    const action = searchParams.get('action');
     
     // Find the game first to validate the slug
     const game = await prisma.game.findUnique({
@@ -113,12 +88,13 @@ export async function PATCH(request, { params }) {
       );
     }
     
-    // Check if the product exists and belongs to the game
+    // Check if product exists and belongs to the game
     const existingProduct = await prisma.product.findFirst({
       where: {
         id,
         gameId: game.id
-      }
+      },
+      select: { id: true }
     });
     
     if (!existingProduct) {
@@ -128,43 +104,8 @@ export async function PATCH(request, { params }) {
       );
     }
     
-    // Handle special action: toggle active status
-    if (action === 'toggleActive') {
-      const updatedProduct = await prisma.product.update({
-        where: { id },
-        data: { isActive: !existingProduct.isActive },
-        include: {
-          category: {
-            select: {
-              id: true,
-              name: true,
-              slug: true
-            }
-          }
-        }
-      });
-      
-      return NextResponse.json({
-        success: true,
-        message: `Product ${updatedProduct.isActive ? 'activated' : 'deactivated'} successfully`,
-        product: updatedProduct,
-      });
-    }
-    
-    // Regular update
-    const updatedProduct = await prisma.product.update({
-      where: { id },
-      data: body,
-      include: {
-        category: {
-          select: {
-            id: true,
-            name: true,
-            slug: true
-          }
-        }
-      }
-    });
+    // Use the service to update the product
+    const updatedProduct = await updateProduct(id, body);
     
     return NextResponse.json({
       success: true,
@@ -189,9 +130,15 @@ export async function PATCH(request, { params }) {
 // Delete product by ID
 export async function DELETE(request, { params }) {
   try {
-    // Check admin access
-    const { isAdmin, error } = await checkAdminAccess();
-    if (!isAdmin) return error;
+    // Check admin authentication
+    const session = await getServerSession(authOptions);
+    
+    if (!session || !session.user || session.user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized: Admin access required" },
+        { status: 401 }
+      );
+    }
     
     const { slug, id } = params;
     
@@ -208,12 +155,13 @@ export async function DELETE(request, { params }) {
       );
     }
     
-    // Check if the product exists and belongs to the game
+    // Check if product exists and belongs to the game
     const existingProduct = await prisma.product.findFirst({
       where: {
         id,
         gameId: game.id
-      }
+      },
+      select: { id: true }
     });
     
     if (!existingProduct) {
@@ -223,27 +171,23 @@ export async function DELETE(request, { params }) {
       );
     }
     
-    // Check if product is used in orders
-    const orderCount = await prisma.orderItem.count({
-      where: { productId: id },
-    });
-    
-    if (orderCount > 0) {
-      return NextResponse.json(
-        { success: false, message: 'Cannot delete product that has been ordered' },
-        { status: 400 }
-      );
+    try {
+      // Use the service to delete the product
+      await deleteProduct(id);
+      
+      return NextResponse.json({
+        success: true,
+        message: "Product deleted successfully",
+      });
+    } catch (error) {
+      if (error.message === 'Cannot delete product that has been ordered') {
+        return NextResponse.json(
+          { success: false, message: error.message },
+          { status: 400 }
+        );
+      }
+      throw error;
     }
-    
-    // Delete the product
-    await prisma.product.delete({
-      where: { id },
-    });
-    
-    return NextResponse.json({
-      success: true,
-      message: "Product deleted successfully",
-    });
     
   } catch (error) {
     console.error('Error deleting product:', error);

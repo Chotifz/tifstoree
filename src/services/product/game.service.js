@@ -24,21 +24,10 @@ export async function getGames({
       take: limit,
     });
     
-    const total = await prisma.game.count();
-    
-    const totalPages = Math.ceil(total / limit);
-    const pagination = {
-      page,
-      limit,
-      total,
-      totalPages,
-      hasNext: page < totalPages,
-      hasPrev: page > 1,
-    };
     
     return {
       games,
-      pagination,
+     
     };
   }
 export async function getGameBySlug(slug, includeCategories = true) {
