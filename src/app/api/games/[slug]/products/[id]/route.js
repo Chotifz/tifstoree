@@ -12,7 +12,9 @@ import {
 // Get product by ID
 export async function GET(request, { params }) {
   try {
-    const { slug, id } = params;
+    // Ensure params is awaited - this is the fix for your error
+    const resolvedParams = await params;
+    const { slug, id } = resolvedParams;
     
     // Find the game first to validate the slug
     const game = await prisma.game.findUnique({
@@ -58,7 +60,6 @@ export async function GET(request, { params }) {
     );
   }
 }
-
 // Update product by ID
 export async function PATCH(request, { params }) {
   try {

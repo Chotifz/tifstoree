@@ -28,7 +28,6 @@ import SkeletonDetailGame from '@/components/SkeletonDetailGame';
 import GameDetailError from '@/components/GameDetailError';
 import GameDetailBanner from '@/components/games-detail/GameDetailBanner';
 import HeaderGameDetail from '@/components/games-detail/HeaderGameDetail';
-import HowToTopUp from '@/components/games-detail/HowToTopUpCard';
 import { formatPrice } from '@/lib/utils';
 
 export default function GameDetail() {
@@ -214,7 +213,6 @@ export default function GameDetail() {
         <HeaderGameDetail game={game} />      
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
-            <HowToTopUp game={game} />
             {/* ID Input card */}
             <Card className="border-border/40">
               <CardContent className="p-6">
@@ -364,30 +362,8 @@ export default function GameDetail() {
             {/* Payment Method card */}
             <Card className="border-border/40">
               <CardContent className="p-6">
-                <h2 className="text-lg font-semibold mb-4">3. Pilih Metode Pembayaran</h2>
-                
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {paymentMethods.map((method) => (
-                    <div
-                      key={method.id} 
-                      onClick={() => setPaymentMethod(method.id)}
-                      className={`cursor-pointer p-3 border rounded-md flex items-center justify-center h-14 ${
-                        paymentMethod === method.id 
-                          ? "border-primary bg-primary/5"
-                          : "border-border hover:border-primary/40"
-                      }`}
-                    >
-                      <div className="h-8 w-8 relative">
-                        <Image 
-                          src={method.icon} 
-                          alt={method.name}
-                          fill
-                          className="object-contain"
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <h2 className="text-lg font-semibold mb-4">3. Kode Promo</h2>
+              
               </CardContent>
             </Card>
           </div>
@@ -500,7 +476,7 @@ export default function GameDetail() {
                   <Button 
                     className="w-full" 
                     size="lg"
-                    disabled={!selectedProduct || !paymentMethod}
+                    disabled={!selectedProduct }
                     onClick={handleCheckout}
                   >
                     <CreditCard className="mr-2 h-4 w-4" />
