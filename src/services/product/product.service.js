@@ -17,7 +17,6 @@ export async function getProductsByGame(gameId, options = {}) {
     limit = 10,
   } = options;
   
-  // Build query conditions
   const where = { gameId };
   
   if (categoryId) {
@@ -27,7 +26,6 @@ export async function getProductsByGame(gameId, options = {}) {
   // Calculate pagination
   const skip = (page - 1) * limit;
   
-  // Get products
   const products = await prisma.product.findMany({
     where,
     include: {

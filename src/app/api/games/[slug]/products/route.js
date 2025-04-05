@@ -12,13 +12,11 @@ export async function GET(request, { params }) {
   try {
     const { slug } = await params;
     const { searchParams } = new URL(request.url);
-    
-    // Get query parameters
+  
     const categoryId = searchParams.get('categoryId');
     const page = searchParams.get('page') ? parseInt(searchParams.get('page'), 10) : 1;
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit'), 10) : 10;
     
-    // Find the game by slug
     const game = await prisma.game.findUnique({
       where: { slug },
       select: { id: true }
@@ -30,15 +28,13 @@ export async function GET(request, { params }) {
         { status: 404 }
       );
     }
-    
-    // Use the service to get products
+
     const { products, pagination } = await getProductsByGame(game.id, {
       categoryId,
       page,
       limit
     });
     
-    // Return response
     return NextResponse.json({
       success: true,
       products,
@@ -61,7 +57,6 @@ export async function GET(request, { params }) {
 
 export async function POST(request, { params }) {
   try {
-    // Check admin authentication
     const session = await getServerSession(authOptions);
     
     if (!session || !session.user || session.user.role !== 'ADMIN') {
@@ -74,7 +69,6 @@ export async function POST(request, { params }) {
     const { slug } = params;
     const body = await request.json();
     
-    // Find the game by slug
     const game = await prisma.game.findUnique({
       where: { slug },
       select: { id: true }
@@ -87,7 +81,6 @@ export async function POST(request, { params }) {
       );
     }
     
-    // Use the service to create a product
     const product = await createProduct({
       ...body,
       gameId: game.id

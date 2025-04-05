@@ -2,14 +2,11 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Image from 'next/image';
-import Link from 'next/link';
 import { 
-  ChevronLeft,User, Hash, Shield, 
+  User, Hash, Shield, 
   CheckCircle, CreditCard, Clock, 
 } from 'lucide-react';
 
-// ShadCN Components
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -22,35 +19,30 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 
-// React Query hooks
-import {  useCategoryProducts, useGameById, useGameProducts } from '@/hooks/queries/useGames';
+import { useGameById, useGameProducts } from '@/hooks/queries/useGames';
 import SkeletonDetailGame from '@/components/SkeletonDetailGame';
 import GameDetailError from '@/components/GameDetailError';
-import GameDetailBanner from '@/components/games-detail/GameDetailBanner';
 import HeaderGameDetail from '@/components/games-detail/HeaderGameDetail';
 import { formatPrice } from '@/lib/utils';
+import ProductList from '@/components/games-detail/ProductList';
 
 export default function GameDetail() {
   const params = useParams();
   const router = useRouter();
   const { id } = params;
   
-  // State
   const [activeCategory, setActiveCategory] = useState('');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [gameFormFields, setGameFormFields] = useState({});
   const [formErrors, setFormErrors] = useState({});
   const [email, setEmail] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('');
-  
- // Fetch game data with categories
+ 
   const { 
     data: gameData, 
     isLoading: isGameLoading, 
     isError: isGameError 
   } = useGameById(id, true);
   
-
   const game = gameData?.game;
   const categories = game?.categories || [];
 
@@ -60,8 +52,6 @@ export default function GameDetail() {
     }
   }, [categories, activeCategory]);
   
-  // Fetch products for the active category
-
    const { 
     data: productsData, 
     isLoading: isProductsLoading, 
@@ -75,8 +65,6 @@ export default function GameDetail() {
   
   const products = productsData?.products || [];
   
- 
-  // Handle field changes
   const handleFieldChange = (field, value) => {
     setGameFormFields(prev => ({
       ...prev,
@@ -91,18 +79,6 @@ export default function GameDetail() {
       }));
     }
   };
-  
-  // Payment methods
-  const paymentMethods = [
-    { id: 'dana', name: 'DANA', icon: '/images/method/dana.png' },
-    { id: 'ovo', name: 'OVO', icon: '/images/method/ovo.png' },
-    { id: 'gopay', name: 'GoPay', icon: '/images/method/gopay.png' },
-    { id: 'qris', name: 'QRIS', icon: '/images/method/qqris.jpg' },
-    { id: 'bca', name: 'BCA', icon: '/images/method/bca.png' },
-    { id: 'bri', name: 'BRI', icon: '/images/method/qbri2.png' },
-    { id: 'mandiri', name: 'Mandiri', icon: '/images/method/mandiri.png' },
-    { id: 'shopeepay', name: 'ShopeePay', icon: '/images/method/shopeepay.png' },
-  ];
   
   // Validate inputs before proceeding
   const validateInputs = useCallback(() => {
@@ -125,12 +101,6 @@ export default function GameDetail() {
       }
     });
     
-    // Check payment method
-    if (!paymentMethod) {
-      toast.error("Silakan pilih metode pembayaran");
-      return false;
-    }
-    
     // If email is provided, validate format
     if (email && !email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
       errors.email = "Format email tidak valid";
@@ -138,7 +108,7 @@ export default function GameDetail() {
     
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
-  }, [selectedProduct, gameFormFields, paymentMethod, email]);
+  }, [selectedProduct, gameFormFields, email]);
   
   const handleCheckout = async () => {
     // if (!validateInputs()) return;
@@ -162,7 +132,6 @@ export default function GameDetail() {
        
        const requestData = await response.json();
       window.snap.pay(requestData)
-      console.log(requestData)
       // Redirect to checkout/payment page
       // In a real app: router.push(`/checkout/${orderNumber}`);
       
@@ -180,14 +149,6 @@ export default function GameDetail() {
     }
   };
   
-  // Get instruction text for the selected product
-  const getInstructionText = () => {
-    if (!selectedProduct) return null;
-    
-    return selectedProduct.instructionText || "Silakan masukkan informasi yang diperlukan untuk melakukan top up.";
-  };
-  
-  // Get products for the active category
   const getCategoryProducts = useCallback(() => {
     if (!products) return [];
     return products;
@@ -277,93 +238,40 @@ export default function GameDetail() {
                   {/* Products for each category */}
                   {categories.map((category) => (
                     <TabsContent key={category.id} value={category.id} className="m-0 p-0">
-                      {isProductsLoading ? (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                          {[1, 2, 3, 4, 5, 6].map((n) => (
-                            <Skeleton key={n} className="h-32 w-full rounded-lg" />
-                          ))}
-                        </div>
-                      ) : isProductsError ? (
-                        <Alert variant="destructive">
-                          <AlertTitle>Error</AlertTitle>
-                          <AlertDescription>
-                            Gagal memuat produk untuk kategori ini. Silakan coba lagi.
-                          </AlertDescription>
-                        </Alert>
-                      ) : (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                          {getCategoryProducts()
-                            .filter(product => product.categoryId === category.id)
-                            .map((product) => (
-                              <div
-                                key={product.id}
-                                className="cursor-pointer relative"
-                                onClick={() => setSelectedProduct(product)}
-                              >
-                                <Card
-                                  className={`h-full border ${
-                                    selectedProduct?.id === product.id
-                                      ? "border-primary bg-primary/5"
-                                      : "border-border/60 hover:border-primary/40"
-                                  } transition-all hover:shadow-sm`}
-                                >
-                                  <CardContent className="p-4 flex flex-col items-center text-center">
-                                    {/* Badges */}
-                                    <div className="absolute -top-2 -right-2 flex space-x-1">
-                                      {product.isPopular && (
-                                        <Badge variant="secondary" className="bg-amber-100 text-amber-700 dark:bg-amber-700/20 dark:text-amber-400 text-[10px] font-medium">
-                                          Terlaris
-                                        </Badge>
-                                      )}
-                                      {product.isNew && (
-                                        <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-700/20 dark:text-emerald-400 text-[10px] font-medium">
-                                          Baru
-                                        </Badge>
-                                      )}
-                                      {product.discountPrice && (
-                                        <Badge variant="secondary" className="bg-rose-100 text-rose-700 dark:bg-rose-700/20 dark:text-rose-400 text-[10px] font-medium">
-                                          Promo
-                                        </Badge>
-                                      )}
-                                    </div>
-                                    
-                                    <h3 className="font-medium mb-2">{product.name}</h3>
-                                    
-                                    {/* Price with discount */}
-                                    <div className="mt-auto">
-                                      {product.discountPrice && (
-                                        <div className="text-sm line-through text-muted-foreground mb-1">
-                                          {formatPrice(product.price)}
-                                        </div>
-                                      )}
-                                      <div className="font-bold text-base">
-                                        {formatPrice(product.discountPrice || product.price)}
-                                      </div>
-                                    </div>
-                                  </CardContent>
-                                </Card>
-                                
-                                {/* Selection indicator */}
-                                {selectedProduct?.id === product.id && (
-                                  <div className="absolute top-0 right-0 h-5 w-5 bg-primary rounded-full transform translate-x-1/4 -translate-y-1/4 flex items-center justify-center">
-                                    <CheckCircle className="h-4 w-4 text-white" />
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                        </div>
-                      )}
+                      <ProductList
+                        products={getCategoryProducts().filter(product => product.categoryId === category.id)}
+                        selectedProduct={selectedProduct}
+                        onSelect={setSelectedProduct}
+                      />
                     </TabsContent>
                   ))}
                 </Tabs>
               </CardContent>
             </Card>
             
-            {/* Payment Method card */}
+            {/* Code Promo */}
             <Card className="border-border/40">
               <CardContent className="p-6">
                 <h2 className="text-lg font-semibold mb-4">3. Kode Promo</h2>
-              
+                <div className="space-y-2">
+                  <Label htmlFor="promoCode" className="text-sm">Masukkan Kode Promo</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="promoCode"
+                      type="text"
+                      placeholder="Masukkan kode promo"
+                      value={""}
+                      onChange={(e) => {
+                        setPromoCode(e.target.value);
+                        // Clear pesan error saat mengetik ulang
+                        if (promoError) setPromoError('');
+                      }}
+                      // className={promoError ? "border-destructive" : ""}
+                    />
+                    <Button >Gunakan</Button>
+                  </div>
+                  
+                </div>
               </CardContent>
             </Card>
           </div>

@@ -38,11 +38,8 @@ function HeaderGameDetail({ game }) {
               
               <div className="flex flex-wrap gap-2 text-xs">
                 <div className="bg-muted px-2 py-1 rounded-md">
-                  Developer: {game.developerName}
-                </div>
-                <div className="bg-muted px-2 py-1 rounded-md">
-                  Publisher: {game.publisherName}
-                </div>
+                  {game.developerName}
+                </div>  
               </div>
             </div>
           </div>

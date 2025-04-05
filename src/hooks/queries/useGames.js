@@ -71,18 +71,19 @@ export function useGameById(slug, includeCategories = true, queryOptions = {}) {
   });
 }
 
-export function useGameProducts(gameSlug, id, params = {}, queryOptions = {}) {
+export function useGameProducts(gameSlug, params = {}, queryOptions = {}) {
   const { categoryId, limit, page } = params;
   
   return useQuery({
-    queryKey: ['gameProducts', gameSlug, id, { categoryId, limit, page }],
+    queryKey: ['gameProducts', gameSlug, { categoryId, limit, page }],
     queryFn: async () => {
       const queryParams = new URLSearchParams();
       if (categoryId) queryParams.append('categoryId', categoryId);
       if (limit) queryParams.append('limit', limit);
       if (page) queryParams.append('page', page);
       
-      const response = await fetch(`/api/games/${gameSlug}/products/${id}`);
+      const url = `/api/games/${gameSlug}/products${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+      const response = await fetch(url);
       
       if (!response.ok) {
         throw new Error('Failed to fetch products');
@@ -91,7 +92,7 @@ export function useGameProducts(gameSlug, id, params = {}, queryOptions = {}) {
       return response.json();
     },
     enabled: !!gameSlug,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    ...queryOptions
+    staleTime: 5 * 60 * 1000, // 5 menit
+    ...queryOptions,
   });
 }
