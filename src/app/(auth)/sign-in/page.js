@@ -33,15 +33,14 @@ function SignInForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const searchParams = new URLSearchParams(window.location.search);
+    const callbackUrl = searchParams.get('callbackUrl') || '/';
     
     setIsLoading(true);
     setFormError('');
     
     try {
-      // Get the callbackUrl from the current URL if it exists
-      const searchParams = new URLSearchParams(window.location.search);
-      const callbackUrl = searchParams.get('callbackUrl') || '/';
-      
       const result = await signIn('credentials', {
         redirect: false,
         email: formData.email,
@@ -50,7 +49,7 @@ function SignInForm() {
       });
       
       if (result.error) {
-        setFormError('Email atau password tidak valid');
+        setFormError(result.error);
       } else {
         router.push(callbackUrl);
       }

@@ -69,14 +69,14 @@ export async function loginUser(credentials) {
   });
 
   if (!user) {
-    throw new Error("Invalid email or password");
+    throw new Error("Invalid email ");
   }
 
   // Check password
   const isPasswordValid = await bcrypt.compare(password, user.password);
   
   if (!isPasswordValid) {
-    throw new Error("Invalid email or password");
+    throw new Error("Invalid password");
   }
 
   // Create JWT token

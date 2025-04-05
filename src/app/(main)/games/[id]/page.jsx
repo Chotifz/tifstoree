@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { 
   User, Hash, Shield, 
   CheckCircle, CreditCard, Clock, 
+  Loader2, Search
 } from 'lucide-react';
 
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,6 +26,7 @@ import GameDetailError from '@/components/GameDetailError';
 import HeaderGameDetail from '@/components/games-detail/HeaderGameDetail';
 import { formatPrice } from '@/lib/utils';
 import ProductList from '@/components/games-detail/ProductList';
+import CheckUsername from '@/components/games-detail/CheckUsername';
 
 export default function GameDetail() {
   const params = useParams();
@@ -33,9 +35,16 @@ export default function GameDetail() {
   
   const [activeCategory, setActiveCategory] = useState('');
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [gameFormFields, setGameFormFields] = useState({});
+  const [gameFormFields, setGameFormFields] = useState({
+    userId: '',
+    serverId: ''
+  });
   const [formErrors, setFormErrors] = useState({});
   const [email, setEmail] = useState('');
+  const [promoCode, setPromoCode] = useState('');
+  const [promoError, setPromoError] = useState('');
+  const [accountVerified, setAccountVerified] = useState(false);
+  const [username, setUsername] = useState('');
  
   const { 
     data: gameData, 
@@ -52,35 +61,18 @@ export default function GameDetail() {
     }
   }, [categories, activeCategory]);
   
-   const { 
+  const { 
     data: productsData, 
-    isLoading: isProductsLoading, 
-    isError: isProductsError 
   } = useGameProducts(id, { 
     categoryId: activeCategory,
     active: true
   }, {
-    enabled: !!activeCategory // Only run the query if we have an active category
+    enabled: !!activeCategory
   });
   
   const products = productsData?.products || [];
   
-  const handleFieldChange = (field, value) => {
-    setGameFormFields(prev => ({
-      ...prev,
-      [field]: value
-    }));
-    
-    // Clear error for this field if exists
-    if (formErrors[field]) {
-      setFormErrors(prev => ({
-        ...prev,
-        [field]: ''
-      }));
-    }
-  };
-  
-  // Validate inputs before proceeding
+ 
   const validateInputs = useCallback(() => {
     const errors = {};
     
@@ -90,59 +82,50 @@ export default function GameDetail() {
       return false;
     }
     
-    // Check required fields
-    const requiredFields = typeof selectedProduct.requiredFields === 'string' 
-      ? JSON.parse(selectedProduct.requiredFields) 
-      : selectedProduct.requiredFields;
-    
-    requiredFields.forEach(field => {
-      if (!gameFormFields[field] || gameFormFields[field].trim() === '') {
-        errors[field] = `${field} harus diisi`;
-      }
-    });
+    // Check account verification
+    if (!accountVerified) {
+      toast.error("Silakan verifikasi akun game Anda terlebih dahulu");
+      return false;
+    }
     
     // If email is provided, validate format
     if (email && !email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
       errors.email = "Format email tidak valid";
+      setFormErrors(prev => ({ ...prev, email: errors.email }));
+      return false;
     }
     
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  }, [selectedProduct, gameFormFields, email]);
+    return true;
+  }, [selectedProduct, accountVerified, email, gameFormFields]);
   
+ 
   const handleCheckout = async () => {
-    // if (!validateInputs()) return;
+    if (!validateInputs()) return;
    
-
     try {
       const data = {
         id: selectedProduct.id,
         productName: selectedProduct.name,
         price: selectedProduct.discountPrice || selectedProduct.price,
-        quantity: 1
-      }
+        quantity: 1,
+        gameData: {
+          ...gameFormFields,
+          username
+        }
+      };
 
       toast.loading("Memproses pesanan...");
     
-       const response = await fetch('/api/midtrans/token', {
+      const response = await fetch('/api/midtrans/token', {
         method: 'POST',
         body: JSON.stringify(data)
-       })
+      });
 
-       
-       const requestData = await response.json();
-      window.snap.pay(requestData)
-      // Redirect to checkout/payment page
-      // In a real app: router.push(`/checkout/${orderNumber}`);
+      const requestData = await response.json();
+      window.snap.pay(requestData);
       
       toast.dismiss();
-      toast.success("Pesanan berhasil! Anda akan dialihkan ke halaman pembayaran");
-      
-      // Simulate redirect
-      // setTimeout(() => {
-      //   router.push('/');
-      // }, 2000);
-      
+      toast.success("Pesanan berhasil! Silahkan selesaikan pembayaran.");
     } catch (error) {
       console.error('Checkout error:', error);
       toast.error("Gagal memproses pesanan. Silakan coba lagi.");
@@ -154,18 +137,21 @@ export default function GameDetail() {
     return products;
   }, [products]);
   
-  
+  const handleProductSelect = (product) => {
+    setSelectedProduct(product);
+    
+    // Display instruction text if available
+    if (product.instructionText) {
+      toast.info(product.instructionText);
+    }
+  };
   
   if (isGameLoading) {
-    return (
-      <SkeletonDetailGame />
-    );
+    return <SkeletonDetailGame />;
   }
   
   if (isGameError || !game) {
-    return (
-      <GameDetailError />
-    );
+    return <GameDetailError />;
   }
 
   return (
@@ -175,46 +161,7 @@ export default function GameDetail() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             {/* ID Input card */}
-            <Card className="border-border/40">
-              <CardContent className="p-6">
-                <h2 className="text-lg font-semibold mb-2">1. Masukkan ID Game</h2>
-                
-                <div className="space-y-4">
-                  {Object.keys(gameFormFields).map(field => {
-                    // Format field label for display
-                    const formattedFieldName = field
-                      .replace(/([A-Z])/g, ' $1') // Insert a space before all capital letters
-                      .replace(/^./, str => str.toUpperCase()) // Capitalize the first letter
-                      .replace(/Id$|ID$/, ' ID'); // Replace Id or ID at the end with ' ID'
-                    
-                    // Icon based on field type
-                    let FieldIcon = User;
-                    if (field.toLowerCase().includes('server')) FieldIcon = Hash;
-                    
-                    return (
-                      <div key={field} className="space-y-2">
-                        <Label htmlFor={field} className="flex items-center text-sm">
-                          <FieldIcon className="h-4 w-4 mr-2 text-muted-foreground" />
-                          {formattedFieldName}
-                        </Label>
-                        
-                        <Input 
-                          id={field}
-                          value={gameFormFields[field] || ''}
-                          onChange={(e) => handleFieldChange(field, e.target.value)}
-                          placeholder={`Masukkan ${formattedFieldName}`}
-                          className={formErrors[field] ? "border-destructive" : ""}
-                        />
-                        
-                        {formErrors[field] && (
-                          <p className="text-destructive text-xs">{formErrors[field]}</p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
+            <CheckUsername game={game} gameFormFields={gameFormFields} setGameFormFields={setGameFormFields} setAccountVerified={setAccountVerified} setUsername={setUsername} username={username} accountVerified={accountVerified}/>
             
             {/* Product Selection card */}
             <Card className="border-border/40">
@@ -238,11 +185,13 @@ export default function GameDetail() {
                   {/* Products for each category */}
                   {categories.map((category) => (
                     <TabsContent key={category.id} value={category.id} className="m-0 p-0">
-                      <ProductList
-                        products={getCategoryProducts().filter(product => product.categoryId === category.id)}
-                        selectedProduct={selectedProduct}
-                        onSelect={setSelectedProduct}
-                      />
+                      
+                        <ProductList
+                          products={getCategoryProducts().filter(product => product.categoryId === category.id)}
+                          selectedProduct={selectedProduct}
+                          onSelect={handleProductSelect}
+                        />
+                      
                     </TabsContent>
                   ))}
                 </Tabs>
@@ -260,17 +209,19 @@ export default function GameDetail() {
                       id="promoCode"
                       type="text"
                       placeholder="Masukkan kode promo"
-                      value={""}
+                      value={promoCode}
                       onChange={(e) => {
                         setPromoCode(e.target.value);
                         // Clear pesan error saat mengetik ulang
                         if (promoError) setPromoError('');
                       }}
-                      // className={promoError ? "border-destructive" : ""}
+                      className={promoError ? "border-destructive" : ""}
                     />
-                    <Button >Gunakan</Button>
+                    <Button>Gunakan</Button>
                   </div>
-                  
+                  {promoError && (
+                    <p className="text-destructive text-xs">{promoError}</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -384,7 +335,7 @@ export default function GameDetail() {
                   <Button 
                     className="w-full" 
                     size="lg"
-                    disabled={!selectedProduct }
+                    disabled={!selectedProduct || !accountVerified}
                     onClick={handleCheckout}
                   >
                     <CreditCard className="mr-2 h-4 w-4" />
