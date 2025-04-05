@@ -24,7 +24,7 @@ import { useGameById, useGameProducts } from '@/hooks/queries/useGames';
 import SkeletonDetailGame from '@/components/SkeletonDetailGame';
 import GameDetailError from '@/components/GameDetailError';
 import HeaderGameDetail from '@/components/games-detail/HeaderGameDetail';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice, generateOrderNumber } from '@/lib/utils';
 import ProductList from '@/components/games-detail/ProductList';
 import CheckUsername from '@/components/games-detail/CheckUsername';
 
@@ -103,15 +103,20 @@ export default function GameDetail() {
     if (!validateInputs()) return;
    
     try {
+      const orderNumber = generateOrderNumber(); // Generate unique order number
+    
+
       const data = {
-        id: selectedProduct.id,
+        orderNumber,
+        productId: selectedProduct.id,
         productName: selectedProduct.name,
         price: selectedProduct.discountPrice || selectedProduct.price,
         quantity: 1,
         gameData: {
           ...gameFormFields,
           username
-        }
+        },
+        ...(email && { email }),
       };
 
       toast.loading("Memproses pesanan...");
