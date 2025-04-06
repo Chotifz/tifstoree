@@ -61,7 +61,7 @@ function SignInForm() {
   };
 
   const handleGoogleSignIn = () => {
-    toast("Login dengan Google belum tersedia.");
+    signIn('google', { callbackUrl: '/' });
   };
 
   return (
