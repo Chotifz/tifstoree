@@ -48,6 +48,7 @@ model Game {
   isFeatured       Boolean    @default(false)
   isNew            Boolean    @default(false)
   sorting          Int        @default(0)
+  
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
   categories       Category[]
@@ -69,29 +70,26 @@ model Category {
 
   @@unique([slug, gameId])
 }
-
 model Product {
-  id              String      @id @default(cuid())
-  name            String
-  description     String?
-  price           Float
-  discountPrice   Float?
-  sku             String?     @unique
-  sorting         Int         @default(0)
-  stock           Int?
-  categoryId      String
-  gameId          String
-  providerCode    String?
-  providerType    String?
-  image           String?
-  requiredFields  Json?
-  instructionText String?
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  orderItems      OrderItem[]
-  category        Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  game            Game        @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  id               String   @id // Gunakan kode unik dari provider, misal: "MLA3-S13"
+  name             String   // Nama produk, misal: "3 Diamonds (3 + 0 Bonus)"
+  basePrice        Float    // Harga dasar dari provider
+  price            Float    // Harga jual
+  discountPrice    Float?   // Harga diskon jika ada
+  markupPercentage Float    @default(10)
+
+  categoryId       String
+  gameId           String
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relasi
+  orderItems       OrderItem[]
+  category         Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  game             Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
 }
+
 
 model Order {
   id            String       @id @default(cuid())

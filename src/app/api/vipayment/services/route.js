@@ -13,7 +13,6 @@ export async function GET(request) {
     
     const { searchParams } = new URL(request.url);
     
-    // Add optional filter parameters if provided
     const filterType = searchParams.get('filter_type');
     const filterValue = searchParams.get('filter_value');
     const filterStatus = searchParams.get('filter_status');
