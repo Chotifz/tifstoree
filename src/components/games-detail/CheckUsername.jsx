@@ -12,21 +12,6 @@ function EnhancedCheckUsername({ gameFormFields, setGameFormFields, game, setAcc
   const [formErrors, setFormErrors] = useState({});
   const { nickname, isLoading, error, fetchNickname, resetNickname } = useGameNickname();
   
-  // Get the game code for the provider API
-  const getGameCode = (game) => {
-    // Map game slugs or names to provider game codes
-    const gameCodeMap = {
-      'mobile-legends': 'mobile-legends',
-      'free-fire': 'ff',
-      'pubg-mobile': 'pubgm',
-      'genshin-impact': 'gi',
-      // Add more mappings as needed
-    };
-    
-    return gameCodeMap[game.slug] || game.slug;
-  };
-  
-  // Update form field values
   const handleFieldChange = (field, value) => {
     setGameFormFields(prev => ({
       ...prev,
@@ -91,10 +76,10 @@ function EnhancedCheckUsername({ gameFormFields, setGameFormFields, game, setAcc
     }
     
     try {
-      const gameCode = getGameCode(game);
+ 
       
       await fetchNickname({
-        gameCode: gameCode,
+        gameCode: game.slug,
         userId: gameFormFields.userId,
         zoneId: gameFormFields.serverId || undefined
       });

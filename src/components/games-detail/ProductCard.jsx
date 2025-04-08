@@ -6,6 +6,16 @@ import { CheckCircle } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 
 export default function ProductCard({ product, selectedProduct, onSelect }) {
+  // Calculate discount percentage if discountPrice is available
+  const discountPercentage = product.discountPrice 
+    ? Math.round((1 - product.discountPrice / product.price) * 100) 
+    : 0;
+
+  // Calculate markup percentage relative to base price if available
+  const markupPercentage = product.basePrice 
+    ? Math.round(((product.price / product.basePrice) - 1) * 100) 
+    : 0;
+
   return (
     <div
       className="cursor-pointer relative"
@@ -21,35 +31,39 @@ export default function ProductCard({ product, selectedProduct, onSelect }) {
         <CardContent className="p-4 flex flex-col items-center text-center">
           {/* Badges */}
           <div className="absolute -top-2 -right-2 flex space-x-1">
-            {product.isPopular && (
-              <Badge
-                variant="secondary"
-                className="bg-amber-100 text-amber-700 dark:bg-amber-700/20 dark:text-amber-400 text-[10px] font-medium"
-              >
-                Terlaris
-              </Badge>
-            )}
-            {product.isNew && (
-              <Badge
-                variant="secondary"
-                className="bg-emerald-100 text-emerald-700 dark:bg-emerald-700/20 dark:text-emerald-400 text-[10px] font-medium"
-              >
-                Baru
-              </Badge>
-            )}
+            {/* Check if product is on discount */}
             {product.discountPrice && (
               <Badge
                 variant="secondary"
                 className="bg-rose-100 text-rose-700 dark:bg-rose-700/20 dark:text-rose-400 text-[10px] font-medium"
               >
-                Promo
+                {discountPercentage}% OFF
+              </Badge>
+            )}
+            
+            {/* Check provider status */}
+            {product.providerStatus === 'available' && (
+              <Badge
+                variant="secondary"
+                className="bg-emerald-100 text-emerald-700 dark:bg-emerald-700/20 dark:text-emerald-400 text-[10px] font-medium"
+              >
+                Ready
+              </Badge>
+            )}
+            
+            {product.providerStatus === 'empty' && (
+              <Badge
+                variant="secondary"
+                className="bg-amber-100 text-amber-700 dark:bg-amber-700/20 dark:text-amber-400 text-[10px] font-medium"
+              >
+                Limited
               </Badge>
             )}
           </div>
 
           <h3 className="font-medium mb-2">{product.name}</h3>
 
-          {/* Price dengan discount */}
+          {/* Price information with possible discount */}
           <div className="mt-auto">
             {product.discountPrice && (
               <div className="text-sm line-through text-muted-foreground mb-1">
@@ -59,6 +73,21 @@ export default function ProductCard({ product, selectedProduct, onSelect }) {
             <div className="font-bold text-base">
               {formatPrice(product.discountPrice || product.price)}
             </div>
+            
+            {/* Display provider information for admin debug purposes */}
+            {process.env.NODE_ENV === 'development' && (
+              <div className="text-xs text-muted-foreground mt-2">
+                <div>Base: {formatPrice(product.basePrice || 0)}</div>
+                {product.markupPercentage && (
+                  <div>Markup: {product.markupPercentage}%</div>
+                )}
+                {product.providerCode && (
+                  <div className="truncate max-w-[120px]">
+                    Code: {product.providerCode}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
