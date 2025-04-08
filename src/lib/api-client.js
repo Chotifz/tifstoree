@@ -5,17 +5,7 @@ import axios from '@/lib/axios';
  * API client for games-related endpoints
  */
 const gamesApi = {
-  /**
-   * Get all games with optional filters
-   * @param {Object} params - Query parameters
-   * @param {boolean} [params.featured] - Filter by featured status
-   * @param {boolean} [params.popular] - Filter by popular status
-   * @param {boolean} [params.new] - Filter by new status
-   * @param {string} [params.search] - Search term for game name
-   * @param {number} [params.limit] - Limit number of results
-   * @param {number} [params.page] - Page number for pagination
-   * @returns {Promise<Object>} Games data with pagination
-   */
+ 
   getAllGames: async (params = {}) => {
     try {
       const response = await axios.get('/api/games', { 
@@ -37,12 +27,6 @@ const gamesApi = {
     }
   },
 
-  /**
-   * Get a single game by slug
-   * @param {string} slug - Game slug
-   * @param {boolean} [includeCategories=true] - Whether to include categories
-   * @returns {Promise<Object>} Game data
-   */
   getGameById: async (slug, includeCategories = true) => {
     try {
       const response = await axios.get(`/api/games/${slug}`, { 
@@ -55,11 +39,6 @@ const gamesApi = {
     }
   },
 
-  /**
-   * Search games by name
-   * @param {string} query - Search query
-   * @returns {Promise<Object>} Search results
-   */
   searchGames: async (query) => {
     try {
       const response = await axios.get('/api/games', { 
@@ -72,35 +51,23 @@ const gamesApi = {
     }
   },
 
-/**
- * Get products for a specific game by slug
- * @param {string} gameSlug - Game slug 
- * @param {Object} params - Query parameters
- * @param {string} [params.categoryId] - Optional category ID filter
- * @param {boolean} [params.active] - Filter by active status
- * @param {string} [params.search] - Search term for product name/description
- * @param {number} [params.limit] - Limit number of results
- * @param {number} [params.page] - Page number for pagination
- * @returns {Promise<Object>} Products data with pagination if limit is set
- */
-
-getGameProducts: async (gameSlug, params = {}) => {
-  try {
-    const response = await axios.get(`/api/games/${gameSlug}/products`, {
-      params: {
-        categoryId: params.categoryId,
-        active: params.active !== undefined ? String(params.active) : undefined,
-        search: params.search || undefined,
-        limit: params.limit,
-        page: params.page
-      }
-    });
-    return response.data;
-  } catch (error) {
-    console.error(`Error fetching products for game "${gameSlug}":`, error);
-    throw new Error(error.response?.data?.message || 'Failed to fetch products');
-  }
-},
+  getGameProducts: async (gameSlug, params = {}) => {
+    try {
+      const response = await axios.get(`/api/games/${gameSlug}/products`, {
+        params: {
+          categoryId: params.categoryId,
+          active: params.active !== undefined ? String(params.active) : undefined,
+          search: params.search || undefined,
+          limit: params.limit,
+          page: params.page
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching products for game "${gameSlug}":`, error);
+      throw new Error(error.response?.data?.message || 'Failed to fetch products');
+    }
+  },
 }
   
 export default gamesApi;

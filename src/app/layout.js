@@ -5,8 +5,7 @@ import ThemeProviderWrapper from "@/components/ThemeProviderWrapper";
 import QueryProvider from "@/components/QueryProvider";
 import { Toaster } from "sonner";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000" || 'https://tifstore.com';
-
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL 
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],

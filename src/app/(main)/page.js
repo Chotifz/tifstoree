@@ -6,23 +6,20 @@ import { bannersRes } from '@/config/dummy-data';
 import GamesList from '@/components/GameList';
 
 export default function Home() {
-
   const [banners, setBanners] = useState([]);
+ 
+ useEffect(() => {
+  async function fetchData() {
+    try {
+      setBanners(bannersRes);
 
-  useEffect(() => {
-
-    async function fetchData() {
-      try {
-        setBanners(bannersRes);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
     }
+  }
 
-    fetchData();
-  }, []);
-
-  
+  fetchData();
+}, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -35,6 +32,6 @@ export default function Home() {
           <GamesList />
         </main>
       </div>
-</div>
+    </div>
   );
 }
