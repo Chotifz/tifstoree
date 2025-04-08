@@ -77,6 +77,7 @@ model Product {
   price            Float    // Harga jual
   discountPrice    Float?   // Harga diskon jika ada
   markupPercentage Float    @default(10)
+  sorting         Int        @default(0)
 
   categoryId       String
   gameId           String
