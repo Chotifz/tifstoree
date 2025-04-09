@@ -1,3 +1,4 @@
+// src/components/games-detail/ProductCard.jsx
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,10 +12,9 @@ export default function ProductCard({ product, selectedProduct, onSelect }) {
     ? Math.round((1 - product.discountPrice / product.price) * 100) 
     : 0;
 
-  // Calculate markup percentage relative to base price if available
-  const markupPercentage = product.basePrice 
-    ? Math.round(((product.price / product.basePrice) - 1) * 100) 
-    : 0;
+  // Determine product availability status
+  const isAvailable = product.providerStatus === 'available';
+  const isLimited = product.providerStatus === 'empty';
 
   return (
     <div
@@ -29,10 +29,10 @@ export default function ProductCard({ product, selectedProduct, onSelect }) {
         } transition-all hover:shadow-sm`}
       >
         <CardContent className="p-4 flex flex-col items-center text-center">
-          {/* Badges */}
+          {/* Status badges */}
           <div className="absolute -top-2 -right-2 flex space-x-1">
-            {/* Check if product is on discount */}
-            {product.discountPrice && (
+            {/* Display discount badge */}
+            {discountPercentage > 0 && (
               <Badge
                 variant="secondary"
                 className="bg-rose-100 text-rose-700 dark:bg-rose-700/20 dark:text-rose-400 text-[10px] font-medium"
@@ -41,8 +41,8 @@ export default function ProductCard({ product, selectedProduct, onSelect }) {
               </Badge>
             )}
             
-            {/* Check provider status */}
-            {product.providerStatus === 'available' && (
+            {/* Display availability badge */}
+            {isAvailable && (
               <Badge
                 variant="secondary"
                 className="bg-emerald-100 text-emerald-700 dark:bg-emerald-700/20 dark:text-emerald-400 text-[10px] font-medium"
@@ -51,7 +51,7 @@ export default function ProductCard({ product, selectedProduct, onSelect }) {
               </Badge>
             )}
             
-            {product.providerStatus === 'empty' && (
+            {isLimited && (
               <Badge
                 variant="secondary"
                 className="bg-amber-100 text-amber-700 dark:bg-amber-700/20 dark:text-amber-400 text-[10px] font-medium"
@@ -61,6 +61,7 @@ export default function ProductCard({ product, selectedProduct, onSelect }) {
             )}
           </div>
 
+          {/* Product name */}
           <h3 className="font-medium mb-2">{product.name}</h3>
 
           {/* Price information with possible discount */}
@@ -74,16 +75,18 @@ export default function ProductCard({ product, selectedProduct, onSelect }) {
               {formatPrice(product.discountPrice || product.price)}
             </div>
             
-            {/* Display provider information for admin debug purposes */}
+            {/* Developer info - only show in development */}
             {process.env.NODE_ENV === 'development' && (
               <div className="text-xs text-muted-foreground mt-2">
-                <div>Base: {formatPrice(product.basePrice || 0)}</div>
+                {product.basePrice && (
+                  <div>Base: {formatPrice(product.basePrice)}</div>
+                )}
                 {product.markupPercentage && (
                   <div>Markup: {product.markupPercentage}%</div>
                 )}
                 {product.providerCode && (
                   <div className="truncate max-w-[120px]">
-                    Code: {product.providerCode}
+                    Code: {product.providerCode.substring(0, 10)}...
                   </div>
                 )}
               </div>

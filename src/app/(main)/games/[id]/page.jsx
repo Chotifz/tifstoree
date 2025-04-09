@@ -33,7 +33,6 @@ export default function GameDetail() {
   const router = useRouter();
   const { id } = params;
   
-  const [activeCategory, setActiveCategory] = useState('');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [gameFormFields, setGameFormFields] = useState({
     userId: '',
@@ -53,22 +52,10 @@ export default function GameDetail() {
   } = useGameById(id, true);
   
   const game = gameData?.game;
-  const categories = game?.categories || [];
 
-  useEffect(() => {
-    if (categories.length > 0 && !activeCategory) {
-      setActiveCategory(categories[0].id);
-    }
-  }, [categories, activeCategory]);
-  
   const { 
     data: productsData, 
-  } = useGameProducts(id, { 
-    categoryId: activeCategory,
-    active: true
-  }, {
-    enabled: !!activeCategory
-  });
+  } = useGameProducts(id);
   
   const products = productsData?.products || [];
   
@@ -137,11 +124,6 @@ export default function GameDetail() {
     }
   };
   
-  const getCategoryProducts = useCallback(() => {
-    if (!products) return [];
-    return products;
-  }, [products]);
-  
   const handleProductSelect = (product) => {
     setSelectedProduct(product);
     
@@ -172,37 +154,16 @@ export default function GameDetail() {
             <Card className="border-border/40">
               <CardContent className="p-6">
                 <h2 className="text-lg font-semibold mb-4">2. Pilih Nominal Top Up</h2>
-                
-                {/* Category tabs */}
-                <Tabs
-                  value={activeCategory}
-                  onValueChange={setActiveCategory} 
-                  className="w-full"
-                >
-                  <TabsList className="bg-muted/50 p-1 h-auto w-full mb-6">
-                    {categories.map((category) => (
-                      <TabsTrigger key={category.id} value={category.id} className="flex-1">
-                        {category.name}
-                      </TabsTrigger>
-                    ))}
-                  </TabsList>
-                  
-                  {/* Products for each category */}
-                  {categories.map((category) => (
-                    <TabsContent key={category.id} value={category.id} className="m-0 p-0">
-                      
-                        <ProductList
-                          products={getCategoryProducts().filter(product => product.categoryId === category.id)}
-                          selectedProduct={selectedProduct}
-                          onSelect={handleProductSelect}
-                        />
-                      
-                    </TabsContent>
-                  ))}
-                </Tabs>
+
+                {/* Langsung tampilkan semua produk */}
+                <ProductList
+                  products={products} // atau langsung array produk jika tidak disaring
+                  selectedProduct={selectedProduct}
+                  onSelect={handleProductSelect}
+                />
               </CardContent>
             </Card>
-            
+
             {/* Code Promo */}
             <Card className="border-border/40">
               <CardContent className="p-6">

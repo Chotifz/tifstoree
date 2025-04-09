@@ -12,14 +12,7 @@ export async function getGames({
         { sorting: 'asc' },
         { name: 'asc' }
       ],
-      include: {
-        _count: {
-          select: {
-            products: true,
-            categories: true
-          }
-        }
-      },
+    
       skip,
       take: limit,
     });
@@ -30,14 +23,10 @@ export async function getGames({
      
     };
   }
-export async function getGameBySlug(slug, includeCategories = true) {
+
+  export async function getGameBySlug(slug) {
   const game = await prisma.game.findUnique({
     where: { slug },
-    include: {
-      categories: includeCategories ? {
-        orderBy: { sorting: 'asc' },
-      } : false,
-    },
   });
   
   if (!game) {
@@ -46,6 +35,7 @@ export async function getGameBySlug(slug, includeCategories = true) {
   
   return game;
 }
+
 export async function createGame(data) {
   if (!data.slug) {
     data.slug = slugify(data.name, { lower: true, strict: true });
@@ -65,8 +55,8 @@ export async function createGame(data) {
   
   return game;
 }
+
 export async function updateGame(slug, data) {
-    // First, find the game by slug
     const game = await prisma.game.findUnique({
       where: { slug },
     });
@@ -75,7 +65,6 @@ export async function updateGame(slug, data) {
       throw new Error(`Game not found`);
     }
     
-    // If slug is being updated, check if the new slug already exists
     if (data.slug && data.slug !== slug) {
       const existingGame = await prisma.game.findFirst({
         where: {
@@ -89,47 +78,45 @@ export async function updateGame(slug, data) {
       }
     }
     
-    // Update the game
     const updatedGame = await prisma.game.update({
       where: { id: game.id },
       data,
-      include: {
-        categories: {
-          orderBy: { sorting: 'asc' },
-        },
-      },
     });
     
     return updatedGame;
-  }
+}
+
 export async function deleteGame(slug) {
-    // Find the game by slug
-    const game = await prisma.game.findUnique({
-      where: { slug },
-      include: {
-        _count: {
-          select: {
-            products: true,
-            categories: true
-          }
+  // Find the game by slug
+  const game = await prisma.game.findUnique({
+    where: { slug },
+    include: {
+      _count: {
+        select: {
+          products: true,
+          categories: true
         }
       }
-    });
-    
-    if (!game) {
-      throw new Error('Game not found');
     }
-    
-    // Check if the game has related products or categories
-    if (game._count.products > 0 || game._count.categories > 0) {
-      throw new Error('Cannot delete game with related products or categories. Delete them first.');
-    }
-    
-    // Delete the game
-    const deletedGame = await prisma.game.delete({
-      where: { id: game.id },
-    });
-    
-    return deletedGame;
+  });
+  
+  if (!game) {
+    throw new Error('Game not found');
   }
+  
+  // Check if the game has related products or categories
+  if (game._count.products > 0 || game._count.categories > 0) {
+    throw new Error('Cannot delete game with related products or categories. Delete them first.');
+  }
+  
+  // Delete the game
+  const deletedGame = await prisma.game.delete({
+    where: { id: game.id },
+  });
+  
+  return deletedGame;
+}
+
+
+
 

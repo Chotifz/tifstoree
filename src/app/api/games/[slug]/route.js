@@ -24,12 +24,11 @@ const checkedUser = async () => {
 
 export async function GET(request, { params }) {
   try {
-    const { slug } = params;
+    const { slug } = await params;
     const { searchParams } = new URL(request.url);
 
-    const includeCategories = searchParams.get('includeCategories') !== 'false';
     
-    const game = await getGameBySlug(slug, includeCategories);
+    const game = await getGameBySlug(slug);
     
     return NextResponse.json({
       success: true,

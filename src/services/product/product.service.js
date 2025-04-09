@@ -1,31 +1,49 @@
 // src/services/product/product.service.js
 import { prisma } from '@/lib/prisma';
+import { calculatePrice, calculateDiscountPrice } from '../provider/vippayment.service';
 
-/**
- * Get products for a game with optional filters
- * @param {string} gameId - The game ID
- * @param {Object} options - Filter options
- * @param {string} [options.categoryId] - Category ID filter
- * @param {number} [options.page=1] - Page number
- * @param {number} [options.limit=10] - Items per page
- * @returns {Promise<Object>} Products with pagination info
- */
+
 export async function getProductsByGame(gameId, options = {}) {
   const { 
     categoryId,
     page = 1, 
     limit = 10,
+    search = '',
+    sortBy = 'price',
+    sortOrder = 'asc'
   } = options;
   
+  // Build the where clause
   const where = { gameId };
   
   if (categoryId) {
     where.categoryId = categoryId;
   }
   
+  if (search) {
+    where.name = {
+      contains: search,
+      mode: 'insensitive'
+    };
+  }
+  
   // Calculate pagination
   const skip = (page - 1) * limit;
   
+  // Build the orderBy clause
+  let orderBy = [];
+  
+  if (sortBy === 'price') {
+    orderBy.push({ price: sortOrder });
+  } else if (sortBy === 'name') {
+    orderBy.push({ name: sortOrder });
+  } else {
+    // Default sorting
+    orderBy.push({ sorting: 'asc' });
+    orderBy.push({ price: 'asc' });
+  }
+  
+  // Fetch products
   const products = await prisma.product.findMany({
     where,
     include: {
@@ -37,10 +55,7 @@ export async function getProductsByGame(gameId, options = {}) {
         },
       },
     },
-    orderBy: [
-      { sorting: 'asc' },
-      { name: 'asc' },
-    ],
+    orderBy,
     skip,
     take: limit,
   });
@@ -64,12 +79,6 @@ export async function getProductsByGame(gameId, options = {}) {
   };
 }
 
-/**
- * Get a single product by ID
- * @param {string} id - Product ID
- * @param {string} gameId - Game ID (for validation)
- * @returns {Promise<Object>} Product data
- */
 export async function getProductById(id, gameId) {
   const product = await prisma.product.findFirst({
     where: {
@@ -84,6 +93,15 @@ export async function getProductById(id, gameId) {
           slug: true,
         },
       },
+      game: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          requiredFields: true,
+          instructionText: true,
+        }
+      }
     },
   });
   
@@ -94,15 +112,20 @@ export async function getProductById(id, gameId) {
   return product;
 }
 
-/**
- * Create a new product
- * @param {Object} data - Product data
- * @returns {Promise<Object>} Created product
- */
+
 export async function createProduct(data) {
-  // Validate required fields
-  if (!data.name || !data.price || !data.categoryId || !data.gameId) {
-    throw new Error('Missing required product fields');
+ 
+  if (data.basePrice && !data.price) {
+    data.price = calculatePrice(data.basePrice, data.markupPercentage || 10);
+  }
+  
+  // Make sure required fields are in the right format
+  if (data.requiredFields && typeof data.requiredFields === 'string') {
+    try {
+      data.requiredFields = JSON.parse(data.requiredFields);
+    } catch (e) {
+      data.requiredFields = data.requiredFields.split(',').map(f => f.trim());
+    }
   }
   
   const product = await prisma.product.create({
@@ -121,13 +144,27 @@ export async function createProduct(data) {
   return product;
 }
 
-/**
- * Update a product
- * @param {string} id - Product ID
- * @param {Object} data - Updated product data
- * @returns {Promise<Object>} Updated product
- */
 export async function updateProduct(id, data) {
+  // Calculate prices if basePrice is updated
+  if (data.basePrice && (data.markupPercentage || data.markupPercentage === 0)) {
+    data.price = calculatePrice(data.basePrice, data.markupPercentage);
+  }
+  
+  // Calculate discount price if discountPercentage is provided
+  if (data.price && data.discountPercentage) {
+    data.discountPrice = calculateDiscountPrice(data.price, data.discountPercentage);
+  }
+  
+  // Make sure required fields are in the right format
+  if (data.requiredFields && typeof data.requiredFields === 'string') {
+    try {
+      data.requiredFields = JSON.parse(data.requiredFields);
+    } catch (e) {
+      data.requiredFields = data.requiredFields.split(',').map(f => f.trim());
+    }
+  }
+  
+  // Update the product
   const product = await prisma.product.update({
     where: { id },
     data,
@@ -145,11 +182,7 @@ export async function updateProduct(id, data) {
   return product;
 }
 
-/**
- * Delete a product
- * @param {string} id - Product ID
- * @returns {Promise<Object>} Deleted product
- */
+
 export async function deleteProduct(id) {
   // Check if product exists
   const product = await prisma.product.findUnique({

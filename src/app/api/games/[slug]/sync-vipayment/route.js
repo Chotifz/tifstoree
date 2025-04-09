@@ -3,12 +3,11 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { fetchProducts, syncWithDatabase } from '@/services/provider/vippayment.service';
+import {  fetchVipaymentProducts, syncWithDatabase } from '@/services/provider/vippayment.service';
 
-// Admin-only API endpoint to sync products for a game from VIPayment
 export async function POST(request, { params }) {
   try {
-    // Check admin authentication
+ 
     const session = await getServerSession(authOptions);
     
     if (!session || !session.user || session.user.role !== 'ADMIN') {
@@ -57,9 +56,9 @@ export async function POST(request, { params }) {
     }
     
     // Fetch products from VIPayment
-    const products = await fetchProducts({
-      gameCode: body.gameCode,
-      server: body.server
+    const products = await  fetchVipaymentProducts({
+      gameCode: body.gameCode,   //filterValue, misal Mobile Legends A
+      filterType: null           // misal game
     });
     
     // Sync with database
