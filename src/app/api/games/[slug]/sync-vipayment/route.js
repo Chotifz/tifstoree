@@ -18,7 +18,7 @@ export async function POST(request, { params }) {
     //   );
     // }
     
-    const { slug } = params;
+    const { slug } = await params;
     const body = await request.json();
 
     // Validate request body
@@ -82,7 +82,7 @@ export async function POST(request, { params }) {
         providerCategory: result.data.gameCode,
         results: syncResults,
         status: syncResults.created > 0 || syncResults.updated > 0 ? 'success' : 'no_changes',
-        userId: session.user.id
+        // userId: session.user.id
       }
     });
     

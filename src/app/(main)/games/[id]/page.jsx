@@ -52,10 +52,13 @@ export default function GameDetail() {
   } = useGameById(id, true);
   
   const game = gameData?.game;
-
+  console.log(game)
+  
   const { 
     data: productsData, 
-  } = useGameProducts(id);
+  } = useGameProducts(id, 
+    
+  );
   
   const products = productsData?.products || [];
   
@@ -219,9 +222,6 @@ export default function GameDetail() {
                       <div className="flex justify-between items-center">
                         <div>
                           <h3 className="font-medium">{selectedProduct.name}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {categories.find(cat => cat.id === selectedProduct.categoryId)?.name}
-                          </p>  
                         </div>
                         <div className="text-right">
                           {selectedProduct.discountPrice ? (
