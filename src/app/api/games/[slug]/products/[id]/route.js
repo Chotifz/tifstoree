@@ -8,18 +8,17 @@ import {
   updateProduct, 
   deleteProduct 
 } from '@/services/product/product.service';
+import { z } from 'zod';
 
 // Get product by ID
 export async function GET(request, { params }) {
   try {
-    // Ensure params is awaited - this is the fix for your error
-    const resolvedParams = await params;
-    const { slug, id } = resolvedParams;
+    const { slug, id } = params;
     
     // Find the game first to validate the slug
     const game = await prisma.game.findUnique({
       where: { slug },
-      select: { id: true }
+      select: { id: true, name: true, slug: true }
     });
     
     if (!game) {
@@ -36,6 +35,11 @@ export async function GET(request, { params }) {
       return NextResponse.json({
         success: true,
         product,
+        game: {
+          id: game.id,
+          name: game.name,
+          slug: game.slug
+        }
       });
     } catch (error) {
       if (error.message === 'Product not found') {
@@ -60,6 +64,7 @@ export async function GET(request, { params }) {
     );
   }
 }
+
 // Update product by ID
 export async function PATCH(request, { params }) {
   try {
@@ -105,8 +110,41 @@ export async function PATCH(request, { params }) {
       );
     }
     
+    // Validate input data
+    const productSchema = z.object({
+      name: z.string().min(1).optional(),
+      description: z.string().optional(),
+      basePrice: z.number().min(0).optional(),
+      price: z.number().min(0).optional(),
+      discountPrice: z.number().min(0).optional().nullable(),
+      markupPercentage: z.number().min(0).optional(),
+      providerCode: z.string().optional(),
+      providerGame: z.string().optional(),
+      providerServer: z.string().optional(),
+      providerStatus: z.string().optional(),
+      requiredFields: z.any().optional(), // This can be an array or JSON
+      instructionText: z.string().optional(),
+      sorting: z.number().optional(),
+      stock: z.number().optional().nullable(),
+      providerPrices: z.any().optional(),
+      discountPercentage: z.number().min(0).max(100).optional(),
+    });
+    
+    const result = productSchema.safeParse(body);
+    
+    if (!result.success) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        }, 
+        { status: 400 }
+      );
+    }
+    
     // Use the service to update the product
-    const updatedProduct = await updateProduct(id, body);
+    const updatedProduct = await updateProduct(id, result.data);
     
     return NextResponse.json({
       success: true,

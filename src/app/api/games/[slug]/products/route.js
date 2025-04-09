@@ -7,6 +7,7 @@ import {
   getProductsByGame, 
   createProduct 
 } from '@/services/product/product.service';
+import { z } from 'zod';
 
 export async function GET(request, { params }) {
   try {
@@ -20,9 +21,10 @@ export async function GET(request, { params }) {
     const sortBy = searchParams.get('sortBy') || 'price';
     const sortOrder = searchParams.get('sortOrder') || 'asc';
     
+    // Find the game by slug
     const game = await prisma.game.findUnique({
       where: { slug },
-      select: { id: true }
+      select: { id: true, name: true }
     });
     
     if (!game) {
@@ -32,6 +34,7 @@ export async function GET(request, { params }) {
       );
     }
 
+    // Get products for this game
     const { products, pagination } = await getProductsByGame(game.id, {
       categoryId,
       page,
@@ -45,6 +48,10 @@ export async function GET(request, { params }) {
       success: true,
       products,
       pagination,
+      game: {
+        id: game.id,
+        name: game.name
+      }
     });
     
   } catch (error) {
@@ -63,18 +70,20 @@ export async function GET(request, { params }) {
 
 export async function POST(request, { params }) {
   try {
-    // const session = await getServerSession(authOptions);
+    // Check admin authentication
+    const session = await getServerSession(authOptions);
     
-    // if (!session || !session.user || session.user.role !== 'ADMIN') {
-    //   return NextResponse.json(
-    //     { success: false, message: "Unauthorized: Admin access required" },
-    //     { status: 401 }
-    //   );
-    // }
+    if (!session || !session.user || session.user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized: Admin access required" },
+        { status: 401 }
+      );
+    }
     
     const { slug } = params;
     const body = await request.json();
     
+    // Find the game by slug
     const game = await prisma.game.findUnique({
       where: { slug },
       select: { id: true }
@@ -87,17 +96,42 @@ export async function POST(request, { params }) {
       );
     }
     
-    if (!body.name || !body.price || !body.categoryId) {
+    // Validate input data
+    const productSchema = z.object({
+      name: z.string().min(1, { message: "Name is required" }),
+      description: z.string().optional(),
+      basePrice: z.number().min(0).optional(),
+      price: z.number().min(0),
+      discountPrice: z.number().min(0).optional().nullable(),
+      markupPercentage: z.number().min(0).optional().default(10),
+      providerCode: z.string().optional(),
+      providerGame: z.string().optional(),
+      providerServer: z.string().optional(),
+      providerStatus: z.string().optional(),
+      requiredFields: z.any().optional(), // This can be an array or JSON
+      instructionText: z.string().optional(),
+      sorting: z.number().optional(),
+      stock: z.number().optional().nullable(),
+    });
+    
+    const result = productSchema.safeParse(body);
+    
+    if (!result.success) {
       return NextResponse.json(
-        { success: false, message: 'Missing required fields: name, price, categoryId' },
+        { 
+          success: false, 
+          message: "Validation failed", 
+          errors: result.error.errors 
+        }, 
         { status: 400 }
       );
     }
     
+    // Create the product
     const product = await createProduct({
-      ...body,
+      ...result.data,
       gameId: game.id,
-   });
+    });
     
     return NextResponse.json({
       success: true,

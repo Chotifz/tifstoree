@@ -1,7 +1,14 @@
 import { prisma } from '@/lib/prisma';
 import axios from 'axios';
 
-
+/**
+ * Fetch products from VIPayment API
+ * @param {Object} options - Options for fetching products
+ * @param {string} options.gameCode - Game code from provider
+ * @param {string} options.filterType - Filter type (e.g., 'game')
+ * @param {string} options.filterStatus - Filter status (e.g., 'available')
+ * @returns {Promise<Array>} Array of products from VIPayment
+ */
 export async function fetchVipaymentProducts(options = {}) {
   try {
     const params = new FormData();
@@ -9,9 +16,9 @@ export async function fetchVipaymentProducts(options = {}) {
     params.append('sign', process.env.VIPPAYMENT_SIGN);
     params.append('type', 'services');
     
-    if (options.gameCode|| options.filterType || options.filterStatus) {  
+    if (options.gameCode || options.filterType || options.filterStatus) {  
       params.append('filter_value', options.gameCode || '');
-      params.append('filter_type', options.filterType   || 'game');
+      params.append('filter_type', options.filterType || 'game');
       params.append('filter_status', options.filterStatus || 'available');
     }
     
@@ -32,14 +39,24 @@ export async function fetchVipaymentProducts(options = {}) {
   }
 }
 
+/**
+ * Sync products from VIPayment with database
+ * @param {Array} products - Products from VIPayment API
+ * @param {Object} options - Sync options
+ * @param {string} options.gameId - Game ID
+ * @param {boolean} options.onlyAvailable - Only sync available products
+ * @param {number} options.markupPercentage - Markup percentage for pricing
+ * @returns {Promise<Object>} Sync results
+ */
 export async function syncWithDatabase(products, options) {
   try {
-    const { gameId, categoryId, markupPercentage = 10 } = options;
+    const { gameId, onlyAvailable = false, markupPercentage = 10 } = options;
     
-    if (!gameId || !categoryId) {
-      throw new Error('Game ID and Category ID are required');
+    if (!gameId) {
+      throw new Error('Game ID is required');
     }
     
+    // Get the game from database
     const game = await prisma.game.findUnique({
       where: { id: gameId },
       select: { id: true, name: true, slug: true }
@@ -49,26 +66,21 @@ export async function syncWithDatabase(products, options) {
       throw new Error('Game not found');
     }
     
-    const category = await prisma.category.findFirst({
-      where: { 
-        id: categoryId,
-        gameId
-      }
-    });
-    
-    if (!category) {
-      throw new Error('Category not found for this game');
-    }
-    
-    // Get existing products for this game and category
+    // Get existing products for this game by provider code
     const existingProducts = await prisma.product.findMany({
       where: {
         gameId,
-        categoryId,
+        providerCode: {
+          in: products.map(p => p.code).filter(Boolean)
+        }
       },
       select: {
         id: true,
         providerCode: true,
+        providerStatus: true,
+        price: true,
+        basePrice: true,
+        markupPercentage: true
       }
     });
     
@@ -76,7 +88,7 @@ export async function syncWithDatabase(products, options) {
     const existingProductMap = {};
     existingProducts.forEach(product => {
       if (product.providerCode) {
-        existingProductMap[product.providerCode] = product.id;
+        existingProductMap[product.providerCode] = product;
       }
     });
     
@@ -85,6 +97,7 @@ export async function syncWithDatabase(products, options) {
       created: 0,
       updated: 0,
       skipped: 0,
+      noChange: 0,
       total: products.length,
     };
     
@@ -96,8 +109,8 @@ export async function syncWithDatabase(products, options) {
         continue;
       }
       
-      // Skip products that are not available if desired
-      if (options.onlyAvailable && providerProduct.status !== 'available') {
+      // Skip products that are not available if onlyAvailable is true
+      if (onlyAvailable && providerProduct.status !== 'available') {
         results.skipped++;
         continue;
       }
@@ -109,11 +122,10 @@ export async function syncWithDatabase(products, options) {
       // Create product data
       const productData = {
         name: providerProduct.name || `Unknown Product`,
-        description: providerProduct.description || '',
+        description: `${providerProduct.name} for ${game.name}`,
         basePrice: basePrice,
         price: priceWithMarkup,
         markupPercentage,
-        categoryId,
         gameId,
         providerCode: providerProduct.code,
         providerGame: providerProduct.game,
@@ -136,15 +148,28 @@ export async function syncWithDatabase(products, options) {
       }
       
       // Check if product already exists
-      if (existingProductMap[providerProduct.code]) {
-        // Update existing product
-        await prisma.product.update({
-          where: {
-            id: existingProductMap[providerProduct.code],
-          },
-          data: productData,
-        });
-        results.updated++;
+      const existingProduct = existingProductMap[providerProduct.code];
+      
+      if (existingProduct) {
+        // Check if product needs update
+        const needsUpdate = 
+          existingProduct.basePrice !== basePrice ||
+          existingProduct.providerStatus !== providerProduct.status ||
+          existingProduct.markupPercentage !== markupPercentage;
+        
+        if (needsUpdate) {
+          // Update existing product
+          await prisma.product.update({
+            where: {
+              id: existingProduct.id,
+            },
+            data: productData,
+          });
+          results.updated++;
+        } else {
+          // No changes needed
+          results.noChange++;
+        }
       } else {
         // Create new product
         await prisma.product.create({
@@ -164,15 +189,35 @@ export async function syncWithDatabase(products, options) {
   }
 }
 
+/**
+ * Calculate price with markup
+ * @param {number} basePrice - Base price
+ * @param {number} markupPercentage - Markup percentage
+ * @returns {number} Price with markup
+ */
 export function calculatePrice(basePrice, markupPercentage = 10) {
   return Math.ceil(basePrice * (1 + markupPercentage / 100));
 }
 
+/**
+ * Calculate discounted price
+ * @param {number} price - Original price
+ * @param {number} discountPercentage - Discount percentage
+ * @returns {number|null} Discounted price or null if no discount
+ */
 export function calculateDiscountPrice(price, discountPercentage = 0) {
   if (discountPercentage <= 0) return null;
   return Math.ceil(price * (1 - discountPercentage / 100));
 }
 
+/**
+ * Check nickname from game provider
+ * @param {Object} params - Request parameters
+ * @param {string} params.gameCode - Game code
+ * @param {string} params.userId - User ID
+ * @param {string} params.zoneId - Zone ID (optional)
+ * @returns {Promise<Object>} Nickname information
+ */
 export async function checkNickname(params) {
   try {
     const { gameCode, userId, zoneId } = params;
