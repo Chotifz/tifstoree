@@ -1,6 +1,6 @@
 // src/app/api/vipayment/products/route.js 
 import { NextResponse } from 'next/server';
-import { fetchVipaymentProducts } from '@/services/provider/vippayment.service';
+import { fetchVipaymentGameFeature } from '@/services/provider/vippayment.service';
 
 export async function GET(request) {
   try {
@@ -10,7 +10,7 @@ export async function GET(request) {
     const filterValue = searchParams.get('filter_value');
     const filterStatus = searchParams.get('filter_status');
 
-    const responseData = await fetchVipaymentProducts({
+    const responseData = await fetchVipaymentGameFeature({
       filterType,
       gameCode : filterValue,
       filterStatus,
