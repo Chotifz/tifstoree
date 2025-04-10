@@ -3,20 +3,13 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { fetchVipaymentProducts, syncWithDatabase } from '@/services/provider/vippayment.service';
+import { fetchVipaymentGameFeature, syncWithDatabase } from '@/services/provider/vippayment.service';
 import { z } from 'zod';
 
 export async function POST(request, { params }) {
   try {
-    // // Check admin authentication
-    // const session = await getServerSession(authOptions);
+     // Check admin authentication
     
-    // if (!session || !session.user || session.user.role !== 'ADMIN') {
-    //   return NextResponse.json(
-    //     { success: false, message: "Unauthorized: Admin access required" },
-    //     { status: 401 }
-    //   );
-    // }
     
     const { slug } = await params;
     const body = await request.json();
@@ -55,7 +48,7 @@ export async function POST(request, { params }) {
     }
     
     // Fetch products from VIPayment
-    const products = await fetchVipaymentProducts({
+    const products = await fetchVipaymentGameFeature({
       gameCode: result.data.gameCode,
       filterType: 'game'
     });

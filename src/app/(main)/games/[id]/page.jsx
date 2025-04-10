@@ -54,11 +54,22 @@ export default function GameDetail() {
   const game = gameData?.game;
   console.log(game)
   
-  const { 
-    data: productsData, 
-  } = useGameProducts(id, 
-    
-  );
+  const gameLimitMap = {
+    'arena-of-valor': 20,
+    'mobile-legends': 45,
+    'free-fire': 70,
+    'call-of-duty-mobile': 9,
+    'honor-of-kings': 12,
+    'genshin-impact': 10,
+  };
+
+  const limit = gameLimitMap[id] 
+
+  const {
+    data: productsData,
+    isLoading,
+    error,
+  } = useGameProducts(id, { limit, page: 1 });
   
   const products = productsData?.products || [];
   

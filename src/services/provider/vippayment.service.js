@@ -1,15 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import axios from 'axios';
 
-/**
- * Fetch products from VIPayment API
- * @param {Object} options - Options for fetching products
- * @param {string} options.gameCode - Game code from provider
- * @param {string} options.filterType - Filter type (e.g., 'game')
- * @param {string} options.filterStatus - Filter status (e.g., 'available')
- * @returns {Promise<Array>} Array of products from VIPayment
- */
-export async function fetchVipaymentProducts(options = {}) {
+export async function fetchVipaymentGameFeature(options = {}) {
   try {
     const params = new FormData();
     params.append('key', process.env.VIPPAYMENT_KEY);
@@ -39,8 +31,36 @@ export async function fetchVipaymentProducts(options = {}) {
   }
 }
 
+export async function fetchVipaymentPrepaidProducts(options = {}) {
+  try {
+    const params = new FormData();
+    params.append('key', process.env.VIPPAYMENT_KEY);
+    params.append('sign', process.env.VIPPAYMENT_SIGN);
+    params.append('type', 'prepaid');
+
+    if (options.someFilter) {
+      params.append('filter_value', options.someFilter || '');
+      params.append('filter_type', 'category');
+    }
+
+    const response = await axios.post(process.env.API_URL_SERVER + '/prepaid', params, {
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.data.result) {
+      throw new Error(response.data.message || 'Failed to fetch prepaid');
+    }
+
+    return response.data.data || [];
+  } catch (error) {
+    console.error('VIPayment prepaid error:', error);
+    throw error;
+  }
+}
+
 /**
- * Sync products from VIPayment with database
  * @param {Array} products - Products from VIPayment API
  * @param {Object} options - Sync options
  * @param {string} options.gameId - Game ID
@@ -55,8 +75,7 @@ export async function syncWithDatabase(products, options) {
     if (!gameId) {
       throw new Error('Game ID is required');
     }
-    
-    // Get the game from database
+
     const game = await prisma.game.findUnique({
       where: { id: gameId },
       select: { id: true, name: true, slug: true }
@@ -66,7 +85,6 @@ export async function syncWithDatabase(products, options) {
       throw new Error('Game not found');
     }
     
-    // Get existing products for this game by provider code
     const existingProducts = await prisma.product.findMany({
       where: {
         gameId,
@@ -108,15 +126,13 @@ export async function syncWithDatabase(products, options) {
         results.skipped++;
         continue;
       }
-      
-      // Skip products that are not available if onlyAvailable is true
+
       if (onlyAvailable && providerProduct.status !== 'available') {
         results.skipped++;
         continue;
       }
-      
-      // Calculate prices
-      const basePrice = parseFloat(providerProduct.price.basic) || 0;
+    
+      const basePrice = parseFloat(providerProduct.price.premium) || 0;
       const priceWithMarkup = Math.ceil(basePrice * (1 + markupPercentage / 100));
       
       // Create product data
@@ -147,18 +163,16 @@ export async function syncWithDatabase(products, options) {
         productData.instructionText = `Masukkan User ID ${game.name} Anda`;
       }
       
-      // Check if product already exists
+
       const existingProduct = existingProductMap[providerProduct.code];
       
       if (existingProduct) {
-        // Check if product needs update
         const needsUpdate = 
           existingProduct.basePrice !== basePrice ||
           existingProduct.providerStatus !== providerProduct.status ||
           existingProduct.markupPercentage !== markupPercentage;
         
         if (needsUpdate) {
-          // Update existing product
           await prisma.product.update({
             where: {
               id: existingProduct.id,
@@ -167,11 +181,9 @@ export async function syncWithDatabase(products, options) {
           });
           results.updated++;
         } else {
-          // No changes needed
           results.noChange++;
         }
       } else {
-        // Create new product
         await prisma.product.create({
           data: {
             ...productData,
@@ -189,35 +201,15 @@ export async function syncWithDatabase(products, options) {
   }
 }
 
-/**
- * Calculate price with markup
- * @param {number} basePrice - Base price
- * @param {number} markupPercentage - Markup percentage
- * @returns {number} Price with markup
- */
 export function calculatePrice(basePrice, markupPercentage = 10) {
   return Math.ceil(basePrice * (1 + markupPercentage / 100));
 }
 
-/**
- * Calculate discounted price
- * @param {number} price - Original price
- * @param {number} discountPercentage - Discount percentage
- * @returns {number|null} Discounted price or null if no discount
- */
 export function calculateDiscountPrice(price, discountPercentage = 0) {
   if (discountPercentage <= 0) return null;
   return Math.ceil(price * (1 - discountPercentage / 100));
 }
 
-/**
- * Check nickname from game provider
- * @param {Object} params - Request parameters
- * @param {string} params.gameCode - Game code
- * @param {string} params.userId - User ID
- * @param {string} params.zoneId - Zone ID (optional)
- * @returns {Promise<Object>} Nickname information
- */
 export async function checkNickname(params) {
   try {
     const { gameCode, userId, zoneId } = params;

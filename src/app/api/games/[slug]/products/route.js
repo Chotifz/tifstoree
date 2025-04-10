@@ -16,7 +16,7 @@ export async function GET(request, { params }) {
   
     const categoryId = searchParams.get('categoryId');
     const page = searchParams.get('page') ? parseInt(searchParams.get('page'), 10) : 1;
-    const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit'), 60) : 60;
+    const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit'), 10) : 60;
     const search = searchParams.get('search') || '';
     const sortBy = searchParams.get('sortBy') || 'price';
     const sortOrder = searchParams.get('sortOrder') || 'asc';
