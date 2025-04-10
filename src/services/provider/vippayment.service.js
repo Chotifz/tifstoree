@@ -229,11 +229,21 @@ export async function checkNickname(params) {
       formData.append('additional_target', zoneId);
     }
     
-    const response = await axios.post(process.env.API_URL_SERVER + '/game-feature', formData, {
-      headers: {
-        'Accept': 'application/json',
-      },
-    });
+    const response = await axios.post(
+      process.env.API_URL_SERVER + '/game-feature',
+      formData,
+      {
+        headers: {
+          'Accept': 'application/json',
+        },
+      }
+    );
+    
+    console.log('PROVIDER URL', process.env.API_URL_SERVER + '/game-feature');  
+    console.log('PROVIDER RESPONSE', response.data);
+    console.log('HEADERS SENT', formData);
+
+    
     
     if (!response.data.result) {
       throw new Error(response.data.message || 'Failed to check nickname');
