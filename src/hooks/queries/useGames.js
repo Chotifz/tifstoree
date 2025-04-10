@@ -72,13 +72,12 @@ export function useGameById(slug, includeCategories = true, queryOptions = {}) {
 }
 
 export function useGameProducts(gameSlug, params = {}, queryOptions = {}) {
-  const { categoryId, limit, page } = params;
+  const {limit, page } = params;
   
   return useQuery({
-    queryKey: ['gameProducts', gameSlug, { categoryId, limit, page }],
+    queryKey: ['gameProducts', gameSlug, {limit, page }],
     queryFn: async () => {
       const queryParams = new URLSearchParams();
-      if (categoryId) queryParams.append('categoryId', categoryId);
       if (limit) queryParams.append('limit', limit);
       if (page) queryParams.append('page', page);
       

@@ -1,83 +1,104 @@
-// src/services/provider/vippayment.service.js
 import { prisma } from '@/lib/prisma';
+import axios from 'axios';
 
-
-export async function fetchProducts(options = {}) {
+export async function fetchVipaymentGameFeature(options = {}) {
   try {
-    // Build query parameters
-    const params = new URLSearchParams();
+    const params = new FormData();
+    params.append('key', process.env.VIPPAYMENT_KEY);
+    params.append('sign', process.env.VIPPAYMENT_SIGN);
+    params.append('type', 'services');
     
-    if (options.gameCode) {
-      params.append('filter_type', 'game');
-      params.append('filter_value', options.gameCode);
+    if (options.gameCode || options.filterType || options.filterStatus) {  
+      params.append('filter_value', options.gameCode || '');
+      params.append('filter_type', options.filterType || 'game');
+      params.append('filter_status', options.filterStatus || 'available');
     }
     
-    if (options.server) {
-      params.append('filter_server', options.server);
+    const response = await axios.post(process.env.API_URL_SERVER + '/game-feature', params, {
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+    
+    if (!response.data.result) {
+      throw new Error(response.data.message || 'Failed to fetch products from VIPayment');
     }
     
-    // Only get available products
-    params.append('filter_status', 'available');
-    
-    // Make request to internal API endpoint that forwards to VIPayment
-    const response = await fetch(`/api/vipayment/services?${params.toString()}`);
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch products: ${response.statusText}`);
-    }
-    
-    const result = await response.json();
-    
-    if (!result.result) {
-      throw new Error(result.message || 'Failed to fetch products');
-    }
-    
-    return result.data || [];
+    return response.data.data || [];
   } catch (error) {
     console.error('Error fetching VIPayment products:', error);
     throw error;
   }
 }
 
+export async function fetchVipaymentPrepaidProducts(options = {}) {
+  try {
+    const params = new FormData();
+    params.append('key', process.env.VIPPAYMENT_KEY);
+    params.append('sign', process.env.VIPPAYMENT_SIGN);
+    params.append('type', 'prepaid');
 
+    if (options.someFilter) {
+      params.append('filter_value', options.someFilter || '');
+      params.append('filter_type', 'category');
+    }
+
+    const response = await axios.post(process.env.API_URL_SERVER + '/prepaid', params, {
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.data.result) {
+      throw new Error(response.data.message || 'Failed to fetch prepaid');
+    }
+
+    return response.data.data || [];
+  } catch (error) {
+    console.error('VIPayment prepaid error:', error);
+    throw error;
+  }
+}
+
+/**
+ * @param {Array} products - Products from VIPayment API
+ * @param {Object} options - Sync options
+ * @param {string} options.gameId - Game ID
+ * @param {boolean} options.onlyAvailable - Only sync available products
+ * @param {number} options.markupPercentage - Markup percentage for pricing
+ * @returns {Promise<Object>} Sync results
+ */
 export async function syncWithDatabase(products, options) {
   try {
-    const { gameId, categoryId, markupPercentage = 10 } = options;
+    const { gameId, onlyAvailable = false, markupPercentage = 10 } = options;
     
-    if (!gameId || !categoryId) {
-      throw new Error('Game ID and Category ID are required');
+    if (!gameId) {
+      throw new Error('Game ID is required');
     }
-    
-    // Get game and category
+
     const game = await prisma.game.findUnique({
       where: { id: gameId },
-      select: { id: true, name: true }
+      select: { id: true, name: true, slug: true }
     });
     
     if (!game) {
       throw new Error('Game not found');
     }
     
-    const category = await prisma.category.findFirst({
-      where: { 
-        id: categoryId,
-        gameId
-      }
-    });
-    
-    if (!category) {
-      throw new Error('Category not found for this game');
-    }
-    
-    // Get existing products for this game and category
     const existingProducts = await prisma.product.findMany({
       where: {
         gameId,
-        categoryId,
+        providerCode: {
+          in: products.map(p => p.code).filter(Boolean)
+        }
       },
       select: {
         id: true,
         providerCode: true,
+        providerStatus: true,
+        price: true,
+        basePrice: true,
+        markupPercentage: true
       }
     });
     
@@ -85,7 +106,7 @@ export async function syncWithDatabase(products, options) {
     const existingProductMap = {};
     existingProducts.forEach(product => {
       if (product.providerCode) {
-        existingProductMap[product.providerCode] = product.id;
+        existingProductMap[product.providerCode] = product;
       }
     });
     
@@ -94,6 +115,7 @@ export async function syncWithDatabase(products, options) {
       created: 0,
       updated: 0,
       skipped: 0,
+      noChange: 0,
       total: products.length,
     };
     
@@ -104,59 +126,69 @@ export async function syncWithDatabase(products, options) {
         results.skipped++;
         continue;
       }
-      
-      // Skip products that are not available
-      if (providerProduct.status !== 'available') {
+
+      if (onlyAvailable && providerProduct.status !== 'available') {
         results.skipped++;
         continue;
       }
-      
-      // Calculate prices
-      const basePrice = providerProduct.price.basic || 0;
+    
+      const basePrice = parseFloat(providerProduct.price.premium) || 0;
       const priceWithMarkup = Math.ceil(basePrice * (1 + markupPercentage / 100));
       
       // Create product data
       const productData = {
         name: providerProduct.name || `Unknown Product`,
-        description: '', // No description from provider
+        description: `${providerProduct.name} for ${game.name}`,
         basePrice: basePrice,
         price: priceWithMarkup,
-        isActive: true,
+        markupPercentage,
         gameId,
-        categoryId,
         providerCode: providerProduct.code,
         providerGame: providerProduct.game,
         providerServer: providerProduct.server,
         providerStatus: providerProduct.status,
         providerPrices: providerProduct.price,
-        markupPercentage,
-        requiredFields: JSON.stringify(["userId"]), // Default
-        instructionText: 'Please enter your User ID', // Default
       };
       
-      // If the name contains certain keywords, add server ID to required fields
+      // Set required fields and instructions based on game type
       if (
+        game.slug.toLowerCase().includes('mobile-legends') ||
         providerProduct.game?.toLowerCase().includes('mobile legends') ||
         providerProduct.name?.toLowerCase().includes('mobile legends')
       ) {
-        productData.requiredFields = JSON.stringify(["userId", "serverId"]);
-        productData.instructionText = 'Please enter your User ID and Server ID';
+        productData.requiredFields = ["userId", "serverId"];
+        productData.instructionText = 'Masukkan User ID dan Server ID Mobile Legends Anda. Contoh: 12345678 (1234)';
+      } else {
+        productData.requiredFields = ["userId"];
+        productData.instructionText = `Masukkan User ID ${game.name} Anda`;
       }
       
-      // Check if product already exists
-      if (existingProductMap[providerProduct.code]) {
-        // Update existing product
-        await prisma.product.update({
-          where: {
-            id: existingProductMap[providerProduct.code],
-          },
-          data: productData,
-        });
-        results.updated++;
+
+      const existingProduct = existingProductMap[providerProduct.code];
+      
+      if (existingProduct) {
+        const needsUpdate = 
+          existingProduct.basePrice !== basePrice ||
+          existingProduct.providerStatus !== providerProduct.status ||
+          existingProduct.markupPercentage !== markupPercentage;
+        
+        if (needsUpdate) {
+          await prisma.product.update({
+            where: {
+              id: existingProduct.id,
+            },
+            data: productData,
+          });
+          results.updated++;
+        } else {
+          results.noChange++;
+        }
       } else {
-        // Create new product
         await prisma.product.create({
-          data: productData,
+          data: {
+            ...productData,
+            id: `PROD_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`, // Generate unique ID
+          },
         });
         results.created++;
       }
@@ -169,7 +201,6 @@ export async function syncWithDatabase(products, options) {
   }
 }
 
-
 export function calculatePrice(basePrice, markupPercentage = 10) {
   return Math.ceil(basePrice * (1 + markupPercentage / 100));
 }
@@ -177,4 +208,44 @@ export function calculatePrice(basePrice, markupPercentage = 10) {
 export function calculateDiscountPrice(price, discountPercentage = 0) {
   if (discountPercentage <= 0) return null;
   return Math.ceil(price * (1 - discountPercentage / 100));
+}
+
+export async function checkNickname(params) {
+  try {
+    const { gameCode, userId, zoneId } = params;
+    
+    if (!gameCode || !userId) {
+      throw new Error('Game code and user ID are required');
+    }
+    
+    const formData = new FormData();
+    formData.append('key', process.env.VIPPAYMENT_KEY);
+    formData.append('sign', process.env.VIPPAYMENT_SIGN);
+    formData.append('type', 'get-nickname');
+    formData.append('code', gameCode);
+    formData.append('target', userId);
+    
+    if (zoneId) {
+      formData.append('additional_target', zoneId);
+    }
+    
+    const response = await axios.post(process.env.API_URL_SERVER + '/game-feature', formData, {
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+    
+    if (!response.data.result) {
+      throw new Error(response.data.message || 'Failed to check nickname');
+    }
+    
+    return {
+      success: true,
+      nickname: response.data.data,
+      message: response.data.message,
+    };
+  } catch (error) {
+    console.error('Error checking nickname:', error);
+    throw error;
+  }
 }

@@ -1,3 +1,4 @@
+// src/components/games-detail/ProductCard.jsx
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,95 +7,60 @@ import { CheckCircle } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 
 export default function ProductCard({ product, selectedProduct, onSelect }) {
-  // Calculate discount percentage if discountPrice is available
-  const discountPercentage = product.discountPrice 
-    ? Math.round((1 - product.discountPrice / product.price) * 100) 
+  const discountPercentage = product.discountPrice
+    ? Math.round((1 - product.discountPrice / product.price) * 100)
     : 0;
 
-  // Calculate markup percentage relative to base price if available
-  const markupPercentage = product.basePrice 
-    ? Math.round(((product.price / product.basePrice) - 1) * 100) 
-    : 0;
+  const isSelected = selectedProduct?.id === product.id;
 
   return (
     <div
-      className="cursor-pointer relative"
+      className="relative cursor-pointer"
       onClick={() => onSelect(product)}
     >
       <Card
-        className={`h-full border ${
-          selectedProduct?.id === product.id
-            ? "border-primary bg-primary/5"
-            : "border-border/60 hover:border-primary/40"
-        } transition-all hover:shadow-sm`}
+        className={`h-full rounded-xl border-2 transition-all duration-200 ease-in-out ${
+          isSelected
+            ? "border-primary bg-primary/5 shadow-md"
+            : "border-border/50 hover:border-primary/40 hover:shadow-sm"
+        }`}
       >
-        <CardContent className="p-4 flex flex-col items-center text-center">
-          {/* Badges */}
-          <div className="absolute -top-2 -right-2 flex space-x-1">
-            {/* Check if product is on discount */}
-            {product.discountPrice && (
-              <Badge
-                variant="secondary"
-                className="bg-rose-100 text-rose-700 dark:bg-rose-700/20 dark:text-rose-400 text-[10px] font-medium"
-              >
+        <CardContent className="p-2 flex flex-col items-center text-center space-y-2">
+          {/* Status badges */}
+          <div className="absolute top-3 right-3 flex flex-col space-y-1 items-end z-10">
+            {discountPercentage > 0 && (
+              <Badge className="bg-rose-100 text-rose-700 dark:bg-rose-700/20 dark:text-rose-400 text-[11px] font-semibold px-2 py-1 rounded-md">
                 {discountPercentage}% OFF
               </Badge>
             )}
-            
-            {/* Check provider status */}
-            {product.providerStatus === 'available' && (
-              <Badge
-                variant="secondary"
-                className="bg-emerald-100 text-emerald-700 dark:bg-emerald-700/20 dark:text-emerald-400 text-[10px] font-medium"
-              >
-                Ready
-              </Badge>
-            )}
-            
-            {product.providerStatus === 'empty' && (
-              <Badge
-                variant="secondary"
-                className="bg-amber-100 text-amber-700 dark:bg-amber-700/20 dark:text-amber-400 text-[10px] font-medium"
-              >
-                Limited
-              </Badge>
-            )}
+
           </div>
 
-          <h3 className="font-medium mb-2">{product.name}</h3>
+          {/* Product Name */}
+          <span className="font-semibold text-xs text-foreground/90 line-clamp-2 leading-snug">
+            {product.name}
+          </span>
 
-          {/* Price information with possible discount */}
-          <div className="mt-auto">
+          {/* Price */}
+          <div className="mt-2 text-center">
             {product.discountPrice && (
-              <div className="text-sm line-through text-muted-foreground mb-1">
+              <div className="text-xs text-muted-foreground line-through mb-0.5">
                 {formatPrice(product.price)}
               </div>
             )}
-            <div className="font-bold text-base">
+            <div className="text-sm font-bold text-primary">
               {formatPrice(product.discountPrice || product.price)}
             </div>
-            
-            {/* Display provider information for admin debug purposes */}
-            {process.env.NODE_ENV === 'development' && (
-              <div className="text-xs text-muted-foreground mt-2">
-                <div>Base: {formatPrice(product.basePrice || 0)}</div>
-                {product.markupPercentage && (
-                  <div>Markup: {product.markupPercentage}%</div>
-                )}
-                {product.providerCode && (
-                  <div className="truncate max-w-[120px]">
-                    Code: {product.providerCode}
-                  </div>
-                )}
-              </div>
-            )}
           </div>
+
+          {/* Dev info */}
+         
         </CardContent>
       </Card>
 
-      {/* Selection indicator */}
-      {selectedProduct?.id === product.id && (
-        <div className="absolute top-0 right-0 h-5 w-5 bg-primary rounded-full transform translate-x-1/4 -translate-y-1/4 flex items-center justify-center">
+      {/* Selected Indicator */}
+      {isSelected && (
+        <div className="absolute top-0 right-0 h-5 w-5 bg-primary rounded-full transform translate-x-1/3 -translate-y-1/3 flex items-center justify-center shadow-md">
           <CheckCircle className="h-4 w-4 text-white" />
         </div>
       )}

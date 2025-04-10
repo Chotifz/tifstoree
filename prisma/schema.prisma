@@ -1,5 +1,3 @@
-// prisma/schema.prisma
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,8 +6,6 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-
-
 
 // User (opsional, untuk yang sudah login)
 model User {
@@ -26,8 +22,8 @@ model User {
   createdAt          DateTime             @default(now())
   updatedAt          DateTime             @updatedAt
   orders             Order[]
-  accounts      Account[]
-  sessions      Session[]
+  accounts           Account[]
+  sessions           Session[]
 }
 
 // Verification Token (untuk verifikasi email)
@@ -46,60 +42,53 @@ model Game {
   slug             String        @unique
   description      String?       @db.Text
   shortDescription String?
-  icon             String?
-  banner           String?
-  bannerTitle      String?
-  bannerSubtitle   String?
+  icon             String?       // Icon kecil, misalnya logo game
+  banner           String?       // Gambar banner
+  bannerTitle      String?       // Judul di atas banner
+  bannerSubtitle   String?       // Subjudul atau tagline
   developerName    String?
+  instructionText  String?       @db.Text // Instruksi umum (contoh: masukkan user ID, server, dll)
+  requiredFields   Json?         // Field yang perlu diisi user saat checkout (misal: { "userId": "string", "server": "string" })
   isPopular        Boolean       @default(false)
   isFeatured       Boolean       @default(false)
   isNew            Boolean       @default(false)
   sorting          Int           @default(0)
-  categories       Category[]
+  
   products         Product[]
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 }
 
-// Category (subkategori dalam game)
-model Category {
-  id          String    @id @default(cuid())
-  name        String
-  slug        String
-  description String?
-  icon        String?
-  sorting     Int       @default(0)
-  gameId      String
-  game        Game      @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  products    Product[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  @@unique([slug, gameId])
-}
-
 // Product (item spesifik yang bisa dibeli)
 model Product {
-  id              String     @id @default(cuid())
-  name            String
-  description     String?    @db.Text
-  price           Float
-  discountPrice   Float?
-  sku             String?    @unique
-  sorting         Int        @default(0)
-  stock           Int?       // Null untuk unlimited
-  categoryId      String
-  category        Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  gameId          String
-  game            Game       @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  providerCode    String?    // Kode produk dari Digiflazz/VIP
-  providerType    String?    // "DIAMOND", "MEMBERSHIP", dll
-  image           String?
-  orderItems      OrderItem[]
-  requiredFields  Json?      // ["userId", "serverId", "gameUsername"]
-  instructionText String?    @db.Text // Petunjuk cara mengisi user ID, server, dll
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
+  id                String     @id @default(cuid()) // We'll generate this
+  name              String     // Nama produk, misal: "3 Diamonds (3 + 0 Bonus)"
+  description       String?    @db.Text
+  basePrice         Float      // Harga dasar dari provider
+  price             Float      // Harga jual
+  discountPrice     Float?     // Harga diskon jika ada
+  markupPercentage  Float      @default(10)
+  sorting           Int        @default(0)
+  stock             Int?       // Null untuk unlimited
+  
+  gameId            String
+  
+  // Provider-related fields
+  providerCode      String?    // Kode produk dari provider (VIPayment, etc)
+  providerGame      String?    // Game code dari provider
+  providerServer    String?    // Server dari provider (jika ada)
+  providerStatus    String?    // Status dari provider (available, empty, etc)
+  providerPrices    Json?      // Raw price data dari provider
+  
+  // Game-specific fields
+  requiredFields    Json?      // ["userId", "serverId", "gameUsername"]
+  instructionText   String?    @db.Text // Petunjuk cara mengisi user ID, server, dll
+  
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  
+  orderItems        OrderItem[]
+  game              Game       @relation(fields: [gameId], references: [id], onDelete: Cascade)
 }
 
 // Order (pesanan dari user, login atau tidak)
@@ -158,7 +147,7 @@ model Transaction {
   type            TransactionType
   amount          Float
   status          TransactionStatus  @default(PENDING)
-  providerRef     String?            // Referensi ID dari provider (Digiflazz)
+  providerRef     String?            // Referensi ID dari provider
   providerData    Json?              // Data dari provider
   responseData    Json?              // Response dari provider
   gameData        Json?              // Data game terkait
@@ -181,6 +170,18 @@ model Banner {
   sorting     Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+// For tracking provider product sync operations
+model SyncLog {
+  id               String   @id @default(cuid())
+  provider         String   // e.g., "vipayment"
+  gameId           String
+  providerCategory String?  // Game code from provider
+  results          Json?    // Results of the sync operation
+  status           String   // "success", "failed"
+  userId           String?  // Admin who performed the sync
+  createdAt        DateTime @default(now())
 }
 
 // Settings untuk Website
