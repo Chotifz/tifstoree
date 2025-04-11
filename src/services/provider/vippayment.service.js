@@ -59,9 +59,12 @@ export async function fetchVipaymentPrepaidProducts(options = {}) {
     throw error;
   }
 }
-
-export async function orderVipaymentGameFeature({providerCode, userId, zoneId}) {
+ 
+export async function orderVipaymentProduct({ providerCode, userId, zoneId, endpoint = 'game-feature' }) {
   try {
+    if (!endpoint) {
+      throw new Error('Endpoint is required.');
+    }
     const params = new FormData();
     params.append('key', process.env.VIPPAYMENT_KEY);
     params.append('sign', process.env.VIPPAYMENT_SIGN);
@@ -70,27 +73,27 @@ export async function orderVipaymentGameFeature({providerCode, userId, zoneId}) 
     params.append('data_no', userId);
 
     if (zoneId) {
-      params.append('data_zone', zoneId || '');
+      params.append('data_zone', zoneId);
     }
 
-    const response = await axios.post(process.env.API_URL_SERVER + '/game-feature', params, {
+    const response = await axios.post(`${process.env.API_URL_SERVER}/${endpoint}`, params, {
       headers: {
         'Accept': 'application/json',
       },
     });
 
     if (!response.data.result) {
-      throw new Error(response.data.message || 'Failed to order game feature');
+      throw new Error(response.data.message || `Failed to order product from ${endpoint}`);
     }
 
     return response.data.data || {};
   } catch (error) {
-    console.error('Error ordering game feature:', error);
+    console.error(`Error ordering product from ${endpoint}:`, error);
     throw error;
   }
 }
 
-export async function checkVipaymentTrxStatus({trxId, limit}) {
+export async function checkVipaymentTrxStatus({trxId, limit, endpoint = 'game-feature'}) {
   try {
     const params = new FormData();
     params.append('key', process.env.VIPPAYMENT_KEY);
@@ -102,7 +105,7 @@ export async function checkVipaymentTrxStatus({trxId, limit}) {
     params.append('limit', limit );
     }
 
-    const response = await axios.post(process.env.API_URL_SERVER + '/game-feature', params, {
+    const response = await axios.post(`${process.env.API_URL_SERVER}/${endpoint}`, params, {
       headers: {
         'Accept': 'application/json',
       },
@@ -115,6 +118,46 @@ export async function checkVipaymentTrxStatus({trxId, limit}) {
     return response.data.data || {};
   } catch (error) {
     console.error('Error checking order status:', error);
+    throw error;
+  }
+}
+
+export async function checVipaymentkNickname(params) {
+  try {
+    const { gameCode, userId, zoneId } = params;
+    
+    if (!gameCode || !userId) {
+      throw new Error('Game code and user ID are required');
+    }
+    
+    const formData = new FormData();
+    formData.append('key', process.env.VIPPAYMENT_KEY);
+    formData.append('sign', process.env.VIPPAYMENT_SIGN);
+    formData.append('type', 'get-nickname');
+    formData.append('code', gameCode);
+    formData.append('target', userId);
+    
+    if (zoneId) {
+      formData.append('additional_target', zoneId);
+    }
+    
+    const response = await axios.post(process.env.API_URL_SERVER + '/game-feature', formData, {
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+    
+    if (!response.data.result) {
+      throw new Error(response.data.message || 'Failed to check nickname');
+    }
+    
+    return {
+      success: true,
+      nickname: response.data.data,
+      message: response.data.message,
+    };
+  } catch (error) {
+    console.error('Error checking nickname:', error);
     throw error;
   }
 }
@@ -256,46 +299,6 @@ export async function syncWithDatabase(products, options) {
     return results;
   } catch (error) {
     console.error('Error syncing VIPayment products:', error);
-    throw error;
-  }
-}
-
-export async function checVipaymentkNickname(params) {
-  try {
-    const { gameCode, userId, zoneId } = params;
-    
-    if (!gameCode || !userId) {
-      throw new Error('Game code and user ID are required');
-    }
-    
-    const formData = new FormData();
-    formData.append('key', process.env.VIPPAYMENT_KEY);
-    formData.append('sign', process.env.VIPPAYMENT_SIGN);
-    formData.append('type', 'get-nickname');
-    formData.append('code', gameCode);
-    formData.append('target', userId);
-    
-    if (zoneId) {
-      formData.append('additional_target', zoneId);
-    }
-    
-    const response = await axios.post(process.env.API_URL_SERVER + '/game-feature', formData, {
-      headers: {
-        'Accept': 'application/json',
-      },
-    });
-    
-    if (!response.data.result) {
-      throw new Error(response.data.message || 'Failed to check nickname');
-    }
-    
-    return {
-      success: true,
-      nickname: response.data.data,
-      message: response.data.message,
-    };
-  } catch (error) {
-    console.error('Error checking nickname:', error);
     throw error;
   }
 }

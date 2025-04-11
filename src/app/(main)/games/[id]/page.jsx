@@ -10,9 +10,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -52,7 +50,6 @@ export default function GameDetail() {
   } = useGameById(id, true);
   
   const game = gameData?.game;
-  console.log(game)
   
   const gameLimitMap = {
     'arena-of-valor': 20,
@@ -67,8 +64,8 @@ export default function GameDetail() {
 
   const {
     data: productsData,
-    isLoading,
-    error,
+    isLoading: prosuctsLoading,
+    isError: isProductsError,
   } = useGameProducts(id, { limit, page: 1 });
   
   const products = productsData?.products || [];
@@ -77,7 +74,6 @@ export default function GameDetail() {
   const validateInputs = useCallback(() => {
     const errors = {};
     
-    // Check product selection
     if (!selectedProduct) {
       toast.error("Silakan pilih produk terlebih dahulu");
       return false;
@@ -104,7 +100,7 @@ export default function GameDetail() {
     if (!validateInputs()) return;
    
     try {
-      const orderNumber = generateOrderNumber(); // Generate unique order number
+      const orderNumber = generateOrderNumber();
     
 
       const data = {
@@ -140,11 +136,6 @@ export default function GameDetail() {
   
   const handleProductSelect = (product) => {
     setSelectedProduct(product);
-    
-    // Display instruction text if available
-    if (product.instructionText) {
-      toast.info(product.instructionText);
-    }
   };
   
   if (isGameLoading) {
@@ -168,10 +159,8 @@ export default function GameDetail() {
             <Card className="border-border/40">
               <CardContent className="p-6">
                 <h2 className="text-lg font-semibold mb-4">2. Pilih Nominal Top Up</h2>
-
-                {/* Langsung tampilkan semua produk */}
                 <ProductList
-                  products={products} // atau langsung array produk jika tidak disaring
+                  products={products} 
                   selectedProduct={selectedProduct}
                   onSelect={handleProductSelect}
                 />
