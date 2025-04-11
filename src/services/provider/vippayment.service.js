@@ -60,6 +60,65 @@ export async function fetchVipaymentPrepaidProducts(options = {}) {
   }
 }
 
+export async function orderVipaymentGameFeature({providerCode, userId, zoneId}) {
+  try {
+    const params = new FormData();
+    params.append('key', process.env.VIPPAYMENT_KEY);
+    params.append('sign', process.env.VIPPAYMENT_SIGN);
+    params.append('type', 'order');
+    params.append('service', providerCode);
+    params.append('data_no', userId);
+
+    if (zoneId) {
+      params.append('data_zone', zoneId || '');
+    }
+
+    const response = await axios.post(process.env.API_URL_SERVER + '/game-feature', params, {
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.data.result) {
+      throw new Error(response.data.message || 'Failed to order game feature');
+    }
+
+    return response.data.data || {};
+  } catch (error) {
+    console.error('Error ordering game feature:', error);
+    throw error;
+  }
+}
+
+export async function checkVipaymentTrxStatus({trxId, limit}) {
+  try {
+    const params = new FormData();
+    params.append('key', process.env.VIPPAYMENT_KEY);
+    params.append('sign', process.env.VIPPAYMENT_SIGN);
+    params.append('type', 'status');
+
+    if (trxId || limit) {
+    params.append('trxid', trxId);
+    params.append('limit', limit );
+    }
+
+    const response = await axios.post(process.env.API_URL_SERVER + '/game-feature', params, {
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.data.result) {
+      throw new Error(response.data.message || 'Failed to check order status');
+    }
+
+    return response.data.data || {};
+  } catch (error) {
+    console.error('Error checking order status:', error);
+    throw error;
+  }
+}
+
 /**
  * @param {Array} products - Products from VIPayment API
  * @param {Object} options - Sync options
@@ -201,16 +260,7 @@ export async function syncWithDatabase(products, options) {
   }
 }
 
-export function calculatePrice(basePrice, markupPercentage = 10) {
-  return Math.ceil(basePrice * (1 + markupPercentage / 100));
-}
-
-export function calculateDiscountPrice(price, discountPercentage = 0) {
-  if (discountPercentage <= 0) return null;
-  return Math.ceil(price * (1 - discountPercentage / 100));
-}
-
-export async function checkNickname(params) {
+export async function checVipaymentkNickname(params) {
   try {
     const { gameCode, userId, zoneId } = params;
     
@@ -248,4 +298,13 @@ export async function checkNickname(params) {
     console.error('Error checking nickname:', error);
     throw error;
   }
+}
+
+export function calculatePrice(basePrice, markupPercentage = 10) {
+  return Math.ceil(basePrice * (1 + markupPercentage / 100));
+}
+
+export function calculateDiscountPrice(price, discountPercentage = 0) {
+  if (discountPercentage <= 0) return null;
+  return Math.ceil(price * (1 - discountPercentage / 100));
 }

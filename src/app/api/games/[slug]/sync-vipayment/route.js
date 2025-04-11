@@ -8,8 +8,14 @@ import { z } from 'zod';
 
 export async function POST(request, { params }) {
   try {
-     // Check admin authentication
+     const session = await getServerSession(authOptions);
     
+    if (!session || !session.user || session.user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized: Admin access required" },
+        { status: 401 }
+      );
+    }
     
     const { slug } = await params;
     const body = await request.json();
@@ -34,7 +40,6 @@ export async function POST(request, { params }) {
       );
     }
 
-    // Find the game by slug
     const game = await prisma.game.findUnique({
       where: { slug },
       select: { id: true, name: true }

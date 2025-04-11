@@ -1,4 +1,3 @@
-// src/app/api/games/[slug]/products/route.js
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -21,7 +20,6 @@ export async function GET(request, { params }) {
     const sortBy = searchParams.get('sortBy') || 'price';
     const sortOrder = searchParams.get('sortOrder') || 'asc';
     
-    // Find the game by slug
     const game = await prisma.game.findUnique({
       where: { slug },
       select: { id: true, name: true }
@@ -34,7 +32,6 @@ export async function GET(request, { params }) {
       );
     }
 
-    // Get products for this game
     const { products, pagination } = await getProductsByGame(game.id, {
       categoryId,
       page,
@@ -70,7 +67,7 @@ export async function GET(request, { params }) {
 
 export async function POST(request, { params }) {
   try {
-    // Check admin authentication
+
     const session = await getServerSession(authOptions);
     
     if (!session || !session.user || session.user.role !== 'ADMIN') {
@@ -83,7 +80,6 @@ export async function POST(request, { params }) {
     const { slug } = params;
     const body = await request.json();
     
-    // Find the game by slug
     const game = await prisma.game.findUnique({
       where: { slug },
       select: { id: true }
@@ -96,8 +92,7 @@ export async function POST(request, { params }) {
       );
     }
     
-    // Validate input data
-    const productSchema = z.object({
+      const productSchema = z.object({
       name: z.string().min(1, { message: "Name is required" }),
       description: z.string().optional(),
       basePrice: z.number().min(0).optional(),
@@ -108,7 +103,7 @@ export async function POST(request, { params }) {
       providerGame: z.string().optional(),
       providerServer: z.string().optional(),
       providerStatus: z.string().optional(),
-      requiredFields: z.any().optional(), // This can be an array or JSON
+      requiredFields: z.any().optional(),
       instructionText: z.string().optional(),
       sorting: z.number().optional(),
       stock: z.number().optional().nullable(),
@@ -127,7 +122,6 @@ export async function POST(request, { params }) {
       );
     }
     
-    // Create the product
     const product = await createProduct({
       ...result.data,
       gameId: game.id,
