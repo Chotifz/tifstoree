@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { checkNickname } from '@/services/provider/vippayment.service';
+import { checVipaymentkNickname } from '@/services/provider/vippayment.service';
 
 export async function GET(request) {
   try {
@@ -15,7 +15,7 @@ export async function GET(request) {
       );
     }
  
-    const result = await checkNickname({ gameCode, userId, zoneId });
+    const result = await checVipaymentkNickname({ gameCode, userId, zoneId });
     
     return NextResponse.json({
       success: true,

@@ -1,4 +1,3 @@
-// src/app/api/vipayment/products/route.js 
 import { NextResponse } from 'next/server';
 import { fetchVipaymentGameFeature } from '@/services/provider/vippayment.service';
 

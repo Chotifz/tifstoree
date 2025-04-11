@@ -1,4 +1,3 @@
-// src/app/api/games/[slug]/products/[id]/route.js
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -10,12 +9,10 @@ import {
 } from '@/services/product/product.service';
 import { z } from 'zod';
 
-// Get product by ID
 export async function GET(request, { params }) {
   try {
     const { slug, id } = params;
     
-    // Find the game first to validate the slug
     const game = await prisma.game.findUnique({
       where: { slug },
       select: { id: true, name: true, slug: true }
@@ -29,7 +26,6 @@ export async function GET(request, { params }) {
     }
     
     try {
-      // Use the service to get the product
       const product = await getProductById(id, game.id);
       
       return NextResponse.json({
@@ -65,10 +61,8 @@ export async function GET(request, { params }) {
   }
 }
 
-// Update product by ID
 export async function PATCH(request, { params }) {
   try {
-    // Check admin authentication
     const session = await getServerSession(authOptions);
     
     if (!session || !session.user || session.user.role !== 'ADMIN') {
@@ -81,7 +75,6 @@ export async function PATCH(request, { params }) {
     const { slug, id } = params;
     const body = await request.json();
     
-    // Find the game first to validate the slug
     const game = await prisma.game.findUnique({
       where: { slug },
       select: { id: true }
@@ -94,7 +87,6 @@ export async function PATCH(request, { params }) {
       );
     }
     
-    // Check if product exists and belongs to the game
     const existingProduct = await prisma.product.findFirst({
       where: {
         id,
@@ -110,8 +102,7 @@ export async function PATCH(request, { params }) {
       );
     }
     
-    // Validate input data
-    const productSchema = z.object({
+      const productSchema = z.object({
       name: z.string().min(1).optional(),
       description: z.string().optional(),
       basePrice: z.number().min(0).optional(),
@@ -122,7 +113,7 @@ export async function PATCH(request, { params }) {
       providerGame: z.string().optional(),
       providerServer: z.string().optional(),
       providerStatus: z.string().optional(),
-      requiredFields: z.any().optional(), // This can be an array or JSON
+      requiredFields: z.any().optional(),
       instructionText: z.string().optional(),
       sorting: z.number().optional(),
       stock: z.number().optional().nullable(),
@@ -143,7 +134,6 @@ export async function PATCH(request, { params }) {
       );
     }
     
-    // Use the service to update the product
     const updatedProduct = await updateProduct(id, result.data);
     
     return NextResponse.json({
@@ -166,10 +156,9 @@ export async function PATCH(request, { params }) {
   }
 }
 
-// Delete product by ID
+
 export async function DELETE(request, { params }) {
   try {
-    // Check admin authentication
     const session = await getServerSession(authOptions);
     
     if (!session || !session.user || session.user.role !== 'ADMIN') {
@@ -181,7 +170,6 @@ export async function DELETE(request, { params }) {
     
     const { slug, id } = params;
     
-    // Find the game first to validate the slug
     const game = await prisma.game.findUnique({
       where: { slug },
       select: { id: true }
@@ -194,7 +182,6 @@ export async function DELETE(request, { params }) {
       );
     }
     
-    // Check if product exists and belongs to the game
     const existingProduct = await prisma.product.findFirst({
       where: {
         id,
@@ -211,7 +198,6 @@ export async function DELETE(request, { params }) {
     }
     
     try {
-      // Use the service to delete the product
       await deleteProduct(id);
       
       return NextResponse.json({

@@ -1,11 +1,8 @@
 "use client"
 
-import { useState, useMemo } from 'react';
 import { useGames } from '@/hooks/queries/useGames';
 import GameCard from '@/components/GameCard';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { TrendingUp, Zap } from 'lucide-react';
 
 export default function GamesList() {
   const { data, isLoading, isError, error } = useGames({
