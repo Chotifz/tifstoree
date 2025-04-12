@@ -4,10 +4,10 @@ import axiosInstance from "@/lib/axios";
 
 export default async function GameDetail({params}) {
   const { id } = await params;
-  const gameResponse = await axiosInstance.get(`/games/${id}`, {
+  const gameResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/games/${id}`, {
     cache: 'no-store',
   });
-  const game = gameResponse.data.game;
+  const game = await gameResponse.json();
 
   const gameLimitMap = {
     'arena-of-valor': 20,
@@ -19,17 +19,17 @@ export default async function GameDetail({params}) {
   };
   const limit = gameLimitMap[id] 
   
-  const productsResponse = await axiosInstance.get(`/games/${id}/products?limit=${limit}`, {
+  const productsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/games/${id}/products?limit=${limit}`, {
      cache: 'no-store',
    });
-   const products = productsResponse.data.products
+   const products = await productsResponse.json()
 
   return (
     <div className="bg-background min-h-screen">
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         
-      <HeaderGameDetail game={game} />   
-      <GameDetailComp game={game} products={products} />  
+      <HeaderGameDetail game={game.game} />   
+      <GameDetailComp game={game.game} products={products.products} />  
       
       </main>
     </div>

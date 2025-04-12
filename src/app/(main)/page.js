@@ -5,13 +5,13 @@ import axiosInstance from '@/lib/axios';
 
 export default async function Home() {
   const banners = bannersRes;
-  const gamesResponse = await axiosInstance.get('/games?limit=30', {
+  const gamesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/games?limit=30`, {
       cache: 'no-store',
     });
     /* const prepaidResponse = await axiosInstance.get('/api/games?limit=30&category=prepaid', {
       cache: 'no-store',
     }); */
-  
+    const gamesData = await gamesResponse.json();
     
   return (
     <div className="min-h-screen bg-background">
@@ -20,7 +20,7 @@ export default async function Home() {
           <section className="relative">
             <BannerCarousel banners={banners} />
           </section>
-          <GamesList gamesData={gamesResponse.data}/>
+          <GamesList gamesData={gamesData}/>
         </main>
       </div>
     </div>
