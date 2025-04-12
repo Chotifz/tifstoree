@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 
-// Update user function
 async function updateUser(userData) {
   const { id, ...data } = userData;
   
@@ -40,16 +39,13 @@ async function createUser(userData) {
   }
 }
 
-// Mutation hooks
 export function useUpdateUser() {
   const queryClient = useQueryClient();
   
   return useMutation({
     mutationFn: updateUser,
     onSuccess: (data, variables) => {
-      // Invalidate the user query
       queryClient.invalidateQueries(['user', variables.id]);
-      // Invalidate the users list
       queryClient.invalidateQueries(['users']);
     },
   });
@@ -73,7 +69,6 @@ export function useCreateUser() {
   return useMutation({
     mutationFn: createUser,
     onSuccess: () => {
-      // Invalidate the users list
       queryClient.invalidateQueries(['users']);
     },
   });

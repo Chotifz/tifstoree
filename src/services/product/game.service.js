@@ -3,7 +3,7 @@ import slugify from 'slugify';
 
 export async function getGames({
     page = 1,
-    limit = 10
+    limit = 20
   } = {}) {
     const skip = (page - 1) * limit;
     

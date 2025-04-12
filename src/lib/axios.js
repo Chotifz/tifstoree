@@ -1,13 +1,11 @@
-// src/lib/axios.js
 import axios from 'axios';
 
-// Create axios instance with default configs
 const axiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || '',
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 5000, // 30 seconds
+  timeout: 15000, 
 });
 
 // Request interceptor - useful for adding auth tokens or modifying requests

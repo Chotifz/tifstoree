@@ -1,14 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
 
-// API functions for fetching users
-async function fetchUsers() {
-  const response = await fetch('/api/users');
-  if (!response.ok) {
-    throw new Error('Failed to fetch users');
-  }
-  return response.json();
-}
-
 async function fetchUserById(id) {
   if (!id) return null;
   
@@ -19,11 +10,9 @@ async function fetchUserById(id) {
   return response.json();
 }
 
-// Query hooks
 export function useUsers(filters = {}) {
   const { searchQuery, statusFilter, roleFilter } = filters;
   
-  // Convert filters to URL params if needed
   const queryParams = new URLSearchParams();
   if (searchQuery) queryParams.append('search', searchQuery);
   if (statusFilter && statusFilter !== 'all') queryParams.append('status', statusFilter);
@@ -48,6 +37,6 @@ export function useUser(id) {
   return useQuery({
     queryKey: ['user', id],
     queryFn: () => fetchUserById(id),
-    enabled: !!id, // Only run the query if we have an id
+    enabled: !!id, 
   });
 }
