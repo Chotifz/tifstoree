@@ -283,7 +283,7 @@ export default function CheckOrderPage() {
               <PackageSearch className="h-16 w-16 text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium mb-2">Enter an order number to check its status</h3>
               <p className="text-muted-foreground text-center max-w-md">
-                You'll be able to see the status of your order, payment details, and transaction information.
+                You will be able to see the status of your order, payment details, and transaction information.
               </p>
             </div>
           ) : (
