@@ -24,7 +24,7 @@ export async function getGames({
     };
   }
 
-  export async function getGameBySlug(slug) {
+export async function getGameBySlug(slug) {
   const game = await prisma.game.findUnique({
     where: { slug },
   });

@@ -1,14 +1,13 @@
 import GameDetailComp from "@/components/games-detail/GameDetailComp";
 import HeaderGameDetail from "@/components/games-detail/HeaderGameDetail";
-import axiosInstance from "@/lib/axios";
+import { getGameBySlug } from "@/services/product/game.service";
+import { getProductsByGame } from "@/services/product/product.service";
 
 export default async function GameDetail({params}) {
   const { id } = await params;
-  const gameResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/games/${id}`, {
-    cache: 'no-store',
-  });
-  const game = await gameResponse.json();
-
+  
+  const game = await getGameBySlug(id)
+ 
   const gameLimitMap = {
     'arena-of-valor': 20,
     'mobile-legends': 45,
@@ -19,17 +18,22 @@ export default async function GameDetail({params}) {
   };
   const limit = gameLimitMap[id] 
   
-  const productsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/games/${id}/products?limit=${limit}`, {
-     cache: 'no-store',
-   });
-   const products = await productsResponse.json()
+  const options = { 
+    page : 1,
+    limit,
+    search :'',
+    sortBy : 'price',
+    sortOrder : 'asc',
+    status: 'all',}
 
+  const productData = await getProductsByGame(id, options )
+  
   return (
     <div className="bg-background min-h-screen">
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         
-      <HeaderGameDetail game={game.game} />   
-      <GameDetailComp game={game.game} products={products.products} />  
+      <HeaderGameDetail game={game} />   
+      <GameDetailComp game={game} products={productData.products} />  
       
       </main>
     </div>

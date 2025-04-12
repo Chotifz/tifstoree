@@ -1,18 +1,13 @@
 import { BannerCarousel } from '@/components/BannerCarousel';
 import { bannersRes } from '@/config/dummy-data';
 import GamesList from '@/components/games-detail/GameList';
-import axiosInstance from '@/lib/axios';
+import { getGames } from '@/services/product/game.service';
+
 
 export default async function Home() {
   const banners = bannersRes;
-  const gamesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/games?limit=30`, {
-      cache: 'no-store',
-    });
-    /* const prepaidResponse = await axiosInstance.get('/api/games?limit=30&category=prepaid', {
-      cache: 'no-store',
-    }); */
-    const gamesData = await gamesResponse.json();
-    
+
+  const { games } = await getGames({ limit: 30 });
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
@@ -20,7 +15,7 @@ export default async function Home() {
           <section className="relative">
             <BannerCarousel banners={banners} />
           </section>
-          <GamesList gamesData={gamesData}/>
+          <GamesList gamesData={games} />
         </main>
       </div>
     </div>

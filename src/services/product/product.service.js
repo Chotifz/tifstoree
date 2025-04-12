@@ -1,39 +1,47 @@
 import { prisma } from '@/lib/prisma';
 import { calculatePrice, calculateDiscountPrice } from '../provider/vippayment.service';
 
-export async function getProductsByGame(gameId, options = {}) {
-  const { 
+export async function getProductsByGame(slug, options = {}) {
+  const {
     categoryId,
-    page = 1, 
+    page = 1,
     limit = 60,
     search = '',
     sortBy = 'price',
     sortOrder = 'asc',
-    status = 'all'
+    status = 'all',
   } = options;
-  
-  const where = { gameId };
-  
-  if (categoryId) {
-    where.categoryId = categoryId;
+
+  // Ambil gameId berdasarkan slug
+  const game = await prisma.game.findUnique({
+    where: { slug },
+    select: { id: true, name: true },
+  });
+
+  if (!game) {
+    throw new Error('Game not found');
   }
+
+  const where = { gameId: game.id };
+
+  if (categoryId) where.categoryId = categoryId;
 
   if (search) {
     where.OR = [
       { name: { contains: search, mode: 'insensitive' } },
       { description: { contains: search, mode: 'insensitive' } },
-      { providerCode: { contains: search, mode: 'insensitive' } }
+      { providerCode: { contains: search, mode: 'insensitive' } },
     ];
   }
-  
+
   if (status && status !== 'all') {
     where.providerStatus = status;
   }
-  
+
   const skip = (page - 1) * limit;
-  
+
   let orderBy = [];
-  
+
   switch (sortBy) {
     case 'price':
       orderBy.push({ price: sortOrder });
@@ -53,7 +61,7 @@ export async function getProductsByGame(gameId, options = {}) {
       orderBy.push({ price: 'asc' });
       break;
   }
-  
+
   const products = await prisma.product.findMany({
     where,
     orderBy,
@@ -62,9 +70,9 @@ export async function getProductsByGame(gameId, options = {}) {
   });
 
   const total = await prisma.product.count({ where });
-  
+
   const totalPages = Math.ceil(total / limit);
-  
+
   return {
     products,
     pagination: {
@@ -75,6 +83,10 @@ export async function getProductsByGame(gameId, options = {}) {
       hasNext: page < totalPages,
       hasPrev: page > 1,
     },
+    game: {
+      id: game.id,
+      name: game.name,
+    }
   };
 }
 

@@ -10,60 +10,41 @@ import { z } from 'zod';
 
 export async function GET(request, { params }) {
   try {
-    const { slug } = await params;
+    const { slug } = params;
     const { searchParams } = new URL(request.url);
-  
-    const categoryId = searchParams.get('categoryId');
-    const page = searchParams.get('page') ? parseInt(searchParams.get('page'), 10) : 1;
-    const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit'), 10) : 60;
-    const search = searchParams.get('search') || '';
-    const sortBy = searchParams.get('sortBy') || 'price';
-    const sortOrder = searchParams.get('sortOrder') || 'asc';
-    
-    const game = await prisma.game.findUnique({
-      where: { slug },
-      select: { id: true, name: true }
-    });
-    
-    if (!game) {
-      return NextResponse.json(
-        { success: false, message: 'Game not found' },
-        { status: 404 }
-      );
-    }
 
-    const { products, pagination } = await getProductsByGame(game.id, {
-      categoryId,
-      page,
-      limit,
-      search,
-      sortBy,
-      sortOrder
-    });
-    
+    const options = {
+      categoryId: searchParams.get('categoryId'),
+      page: searchParams.get('page') ? parseInt(searchParams.get('page'), 10) : 1,
+      limit: searchParams.get('limit') ? parseInt(searchParams.get('limit'), 10) : 60,
+      search: searchParams.get('search') || '',
+      sortBy: searchParams.get('sortBy') || 'price',
+      sortOrder: searchParams.get('sortOrder') || 'asc',
+    };
+
+    const { products, pagination, game } = await getProductsByGame(slug, options);
+
     return NextResponse.json({
       success: true,
       products,
       pagination,
-      game: {
-        id: game.id,
-        name: game.name
-      }
+      game,
     });
-    
+
   } catch (error) {
     console.error('Error fetching game products:', error);
-    
+
     return NextResponse.json(
-      { 
-        success: false, 
-        message: 'Failed to fetch products', 
+      {
+        success: false,
+        message: 'Failed to fetch products',
         error: error.message,
-      }, 
+      },
       { status: 500 }
     );
   }
 }
+
 
 export async function POST(request, { params }) {
   try {
