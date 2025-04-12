@@ -58,7 +58,7 @@ export default function Header() {
   const navItems = [
    
     { name: 'Kategori', href: '#' },
-    { name: 'Periksa Pesanan', href: '#' },
+    { name: 'Periksa Pesanan', href: 'check-order' },
     { name: 'Promo', href: '#' },
   ];
 

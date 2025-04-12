@@ -1,4 +1,3 @@
-// src/services/transaction/transaction.service.js
 import { prisma } from '@/lib/prisma';
 import { generateTransactionCode } from '@/lib/utils';
 
@@ -7,12 +6,10 @@ export async function processGameTransaction(order) {
   try {
     console.log(`Processing game transaction for order: ${order.orderNumber}`);
     
-    // Only process if order status is correct
     if (order.status !== 'PROCESSING' && order.payment.status !== 'SUCCESS') {
       throw new Error('Order is not ready for processing');
     }
     
-    // Check for existing transaction
     const existingTransaction = await prisma.transaction.findUnique({
       where: { orderId: order.id }
     });
@@ -22,10 +19,8 @@ export async function processGameTransaction(order) {
       return existingTransaction;
     }
     
-    // Generate transaction code
     const transactionCode = generateTransactionCode();
     
-    // Create transaction record
     const transaction = await prisma.transaction.create({
       data: {
         transactionCode,
@@ -41,7 +36,6 @@ export async function processGameTransaction(order) {
     // to process the transaction (e.g., send diamonds, credits, etc.)
     const gameProductResult = await processGameProduct(order, transaction);
     
-    // Update transaction with result
     const updatedTransaction = await prisma.transaction.update({
       where: { id: transaction.id },
       data: {
