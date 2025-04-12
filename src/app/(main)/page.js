@@ -1,10 +1,18 @@
 import { BannerCarousel } from '@/components/BannerCarousel';
 import { bannersRes } from '@/config/dummy-data';
-import GamesList from '@/components/GameList';
+import GamesList from '@/components/games-detail/GameList';
+import axiosInstance from '@/lib/axios';
 
-export default function Home() {
+export default async function Home() {
   const banners = bannersRes;
-
+  const gamesResponse = await axiosInstance.get('/games?limit=30', {
+      cache: 'no-store',
+    });
+    /* const prepaidResponse = await axiosInstance.get('/api/games?limit=30&category=prepaid', {
+      cache: 'no-store',
+    }); */
+  
+    
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
@@ -12,7 +20,7 @@ export default function Home() {
           <section className="relative">
             <BannerCarousel banners={banners} />
           </section>
-          <GamesList />
+          <GamesList gamesData={gamesResponse.data}/>
         </main>
       </div>
     </div>

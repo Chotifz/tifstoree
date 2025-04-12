@@ -13,6 +13,7 @@ const GameCard = ({ game }) => {
               src={game.icon || '/images/games/placeholder.png'}
               alt={game.name}
               fill
+              sizes="100%"
               className="object-cover transition-transform duration-300 hover:scale-105"
             />
           </div>

@@ -1,97 +1,39 @@
-import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
+import axiosInstance from '@/lib/axios';
+import { useQuery} from '@tanstack/react-query';
 
-export function useGames(options = {}, queryOptions = {}) {
-  const { limit, page } = options;
-  
-  const result = useQuery({
-    queryKey: ['games', { limit, page }],
-    queryFn: async () => {
-      const response = await fetch(`/api/games?${new URLSearchParams({
-        limit: limit || 10,
-        page: page || 1
-      })}`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch games');
-      }
-      
-      return response.json();
-    },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    ...queryOptions
-  });
-  
-  return result;
-}
-
-export function useInfiniteGames(options = {}, queryOptions = {}) {
-  const { limit = 10 } = options;
-  
-  const result = useInfiniteQuery({
-    queryKey: ['infiniteGames', { limit }],
-    queryFn: async ({ pageParam = 1 }) => {
-      const response = await fetch(`/api/games?${new URLSearchParams({
-        limit,
-        page: pageParam
-      })}`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch games');
-      }
-      
-      return response.json();
-    },
-    getNextPageParam: (lastPage) => {
-      const { pagination } = lastPage;
-      return pagination?.hasNext ? pagination.page + 1 : undefined;
-    },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    ...queryOptions
-  });
-  
-  return result;
-}
-
-
-export function useGameById(slug, includeCategories = true, queryOptions = {}) {
+export function useGameBySlug(slug) {
   return useQuery({
-    queryKey: ['game', slug, { includeCategories }],
+    queryKey: ['game', slug],
     queryFn: async () => {
-      const response = await fetch(`/api/games/${slug}?includeCategories=${includeCategories}`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch game');
-      }
-      
-      return response.json();
+      const res = await axiosInstance.get(`/games/${slug}`);
+      return res.data;
     },
     enabled: !!slug,
-    staleTime: 10 * 60 * 1000, // 10 minutes
-    ...queryOptions
+    staleTime: 1 * 60 * 1000, 
   });
 }
 
 export function useGameProducts(gameSlug, params = {}, queryOptions = {}) {
-  const {limit, page } = params;
-  
   return useQuery({
-    queryKey: ['gameProducts', gameSlug, {limit, page }],
+    queryKey: ['gameProducts', gameSlug, params],
     queryFn: async () => {
       const queryParams = new URLSearchParams();
-      if (limit) queryParams.append('limit', limit);
-      if (page) queryParams.append('page', page);
-      
-      const url = `/api/games/${gameSlug}/products${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
-      const response = await fetch(url);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch products');
-      }
-      
-      return response.json();
+
+      if (params.limit) queryParams.append('limit', params.limit.toString());
+      if (params.page) queryParams.append('page', params.page.toString());
+      if (params.search) queryParams.append('search', params.search);
+      if (params.sortBy) queryParams.append('sortBy', params.sortBy);
+      if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
+      if (params.status) queryParams.append('status', params.status);
+
+      const url = `/games/${gameSlug}/products${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+
+      const response = await axiosInstance.get(url);
+
+      return response.data;
     },
     enabled: !!gameSlug,
-    staleTime: 5 * 60 * 1000, // 5 menit
+    staleTime: 5 * 60 * 1000, 
     ...queryOptions,
   });
 }
