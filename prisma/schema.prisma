@@ -100,6 +100,11 @@ model Order {
   customerName   String?     // Untuk user non-login
   customerEmail  String      // Required untuk semua user
   customerPhone  String?     // Opsional
+
+  providerOrderId String? // Untuk menyimpan ID order dari VIPayment
+  providerData    Json?   // Untuk menyimpan raw response dari provider
+  retryCount      Int     @default(0) // Untuk tracking retry attempts
+
   status         OrderStatus @default(PENDING)
   totalAmount    Float
   items          OrderItem[]
@@ -149,6 +154,8 @@ model Transaction {
   status          TransactionStatus  @default(PENDING)
   providerRef     String?            // Referensi ID dari provider
   providerData    Json?              // Data dari provider
+  providerTraceId String? // Untuk tracking ID dari VIPayment
+  retryData       Json?   // Untuk menyimpan data retry
   responseData    Json?              // Response dari provider
   gameData        Json?              // Data game terkait
   failedReason    String?

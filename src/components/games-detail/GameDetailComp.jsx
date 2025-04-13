@@ -19,6 +19,8 @@ import { toast } from "sonner";
 import { formatPrice, generateOrderNumber } from '@/lib/utils';
 import ProductList from '@/components/games-detail/ProductList';
 import CheckUsername from '@/components/games-detail/CheckUsername';
+import CheckoutForm from '../CheckoutForm';
+import { processCheckout } from '@/services/checkout/checkout.service';
 
 export default function GameDetailComp({ game, products }) {  
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -57,43 +59,30 @@ export default function GameDetailComp({ game, products }) {
   }, [selectedProduct, accountVerified, email, gameFormFields]);
   
  
-  const handleCheckout = async () => {
+  /*const handleCheckout = async () => {
     if (!validateInputs()) return;
    
     try {
-      const orderNumber = generateOrderNumber();
-    
-
-      const data = {
-        orderNumber,
+      const result = await processCheckout({
         productId: selectedProduct.id,
-        productName: selectedProduct.name,
-        price: selectedProduct.discountPrice || selectedProduct.price,
-        quantity: 1,
         gameData: {
           ...gameFormFields,
           username
         },
-        ...(email && { email }),
-      };
-
-      toast.loading("Memproses pesanan...");
-    
-      const response = await fetch('/api/midtrans/token', {
-        method: 'POST',
-        body: JSON.stringify(data)
+        customerEmail: email,
       });
+      console.log(result)
+  
+      if (!result.success) {
+        throw new Error(result.message);
+      }
 
-      const requestData = await response.json();
-      window.snap.pay(requestData);
-      
-      toast.dismiss();
-      toast.success("Pesanan berhasil! Silahkan selesaikan pembayaran.");
+      window.snap.pay(result.snapToken);
     } catch (error) {
       console.error('Checkout error:', error);
       toast.error("Gagal memproses pesanan. Silakan coba lagi.");
     }
-  };
+  }; */
   
   const handleProductSelect = (product) => {
     setSelectedProduct(product);
@@ -247,15 +236,17 @@ return  (
                 </span>
               </div>
             </div>
-            <Button 
-              className="w-full" 
+            
+            <CheckoutForm product={selectedProduct} gameData={gameFormFields} initialEmail={email}/>
+          {/* <Button 
+              className="w-full mt-3" 
               size="lg"
               disabled={!selectedProduct || !accountVerified}
               onClick={handleCheckout}
             >
               <CreditCard className="mr-2 h-4 w-4" />
               Bayar Sekarang
-            </Button>
+            </Button>*/}  
             <div className="mt-4">
               <div className="flex items-center justify-center text-muted-foreground text-xs mb-2">
                 <Shield className="h-3 w-3 mr-1" />
