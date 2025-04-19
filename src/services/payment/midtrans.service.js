@@ -1,11 +1,16 @@
 import Midtrans from 'midtrans-client';
 
 let snap = new Midtrans.Snap({
-  isProduction: false,
+  isProduction: true,
   serverKey: process.env.MIDTRANS_SERVER_KEY
 });
 
-
+if (process.env.MIDTRANS_SANDBOX === 'true') {
+  snap = new Midtrans.Snap({
+    isProduction: false,
+    serverKey: process.env.MIDTRANS_SERVER_KEY
+  });
+}
 export async function createSnapToken({
   orderNumber,
   productName,
