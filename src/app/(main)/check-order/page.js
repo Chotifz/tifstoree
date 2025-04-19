@@ -50,7 +50,6 @@ export default function CheckOrderPage() {
     }
   }, [order_id]);
 
-  console.log(order_id)
   // Only fetch when a search is performed
   const { 
     data: orderData, 

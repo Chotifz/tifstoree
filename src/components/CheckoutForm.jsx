@@ -21,7 +21,7 @@ export default function CheckoutForm({
 
 
   useEffect(() => {
-    const snapScript = "https://app.sandbox.midtrans.com/snap/snap.js";
+    const snapScript = process.env.NEXT_PUBLIC_MIDTRANS_SNAP_SCRIPT;
     const script = document.createElement('script');
     script.src = snapScript;
     script.setAttribute('data-client-key', process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY);
