@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { 
@@ -35,11 +35,22 @@ import { useOrderDetails, getOrderStatusDisplay, getPaymentStatusDisplay } from 
 import { formatPrice } from '@/lib/utils';
 
 export default function CheckOrderPage() {
+  const searchParams = useSearchParams();
+  const order_id = searchParams.get('order_id');
+
   const router = useRouter();
   const [orderNumber, setOrderNumber] = useState('');
   const [searchedOrder, setSearchedOrder] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
+  useEffect(() => {
+    if (order_id) {
+      setOrderNumber(order_id); 
+      setSearchedOrder(order_id);
+    }
+  }, [order_id]);
+
+  console.log(order_id)
   // Only fetch when a search is performed
   const { 
     data: orderData, 

@@ -1,24 +1,25 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { createCheckout } from '@/actions/checkout';
+import { createCheckout, processGameOrder } from '@/actions/checkout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, CreditCard } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
+import { toast } from 'sonner';
 
 export default function CheckoutForm({ 
   product,
   gameData,
-  initialEmail = '',
+ email,
+ validateInputs
 }) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [email, setEmail] = useState(initialEmail);
 
-  // Initialize Midtrans on component mount
+
   useEffect(() => {
     const snapScript = "https://app.sandbox.midtrans.com/snap/snap.js";
     const script = document.createElement('script');
@@ -34,6 +35,8 @@ export default function CheckoutForm({
   }, []);
 
   const handleSubmit = async (e) => {
+    if (!validateInputs()) return;
+    
     e.preventDefault();
     setIsLoading(true);
     setError('');
@@ -48,7 +51,44 @@ export default function CheckoutForm({
       if (!result.success) {
         throw new Error(result.message);
       }
-      window.snap.pay(result.token);
+
+      window.snap.pay(result.token, {
+        onSuccess: async function(result) {
+          console.log("result", result)
+         
+          const orderId = await result.order_id;
+
+          toast.success("Payment successful! Processing your order...");
+
+          
+          try {
+            const orderResult = await processGameOrder(orderId);
+            if (orderResult.success) {
+              toast.success("Order processed successfully!");
+              router.push(`/check-order/${result.order_id}`);
+            } else {
+              toast.error("Payment successful but order processing failed. We'll process it shortly.");
+              console.log("Payment successful but order processing failed. We'll process it shortly.")
+              router.push(`/check-order/${result.order_id}`);
+            }
+          } catch (error) {
+            console.error("Error processing order:", error);
+            toast.error("Payment successful but there was an issue processing your order. We'll process it shortly.");
+          }
+        },
+        onPending: function(result) {
+          toast.info("Payment pending. Please complete your payment.");
+        },
+        onError: function(result) {
+          console.log("Payment failed. Please try again.");
+          toast.error("Payment failed. Please try again.");
+          setIsLoading(false);
+        },
+        onClose: function() {
+          toast.info("Payment canceled. You can try again later.");
+          setIsLoading(false);
+        }
+      });
 
 
     } catch (error) {
@@ -57,30 +97,11 @@ export default function CheckoutForm({
       setIsLoading(false);
     }
   };
-
-  // jika user sudah membayar panggil fungsi  processGameOrder()
-
   return (
     <Card>
       <CardContent className="p-6">
-        
-
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email address for payment receipt"
-              required
-              disabled={isLoading}
-            />
-            <p className="text-sm text-muted-foreground">
-              We'll send the payment details and your receipt to this email
-            </p>
-          </div>
-
-          {error && (
+         {error && (
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
             </Alert>

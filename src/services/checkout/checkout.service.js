@@ -6,12 +6,12 @@ import {createTransaction as createMidtransTransaction, createSnapToken, getMidt
 
 export async function processCheckout({
   productId,
-  userId, // optional, for logged in users
+  userId,
   customerEmail,
   customerName,
   customerPhone,
   gameData,
-}) {
+  }) {
   try {
     // 1. Validate product exists and is available
     const product = await prisma.product.findUnique({
@@ -49,7 +49,6 @@ export async function processCheckout({
         }
 
         gameData.username = nicknameResult.nickname;
-        console.log(gameData.username)
       } catch (error) {
         throw new Error(`Game account verification failed: ${error.message}`);
       }
@@ -133,9 +132,6 @@ export async function processCheckout({
   }
 }
 
-/**
- * Process VIPayment order after successful payment
- */
 export async function processVipaymentOrder(orderId) {
   try {
     // 1. Get order details
@@ -225,9 +221,6 @@ export async function processVipaymentOrder(orderId) {
   }
 }
 
-/**
- * Check VIPayment order status
- */
 export async function checkVipaymentOrderStatus(orderId) {
   const order = await prisma.order.findUnique({
     where: { id: orderId },

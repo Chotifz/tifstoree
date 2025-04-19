@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET(request, { params }) {
   try {
-    const { orderNumber } = params;
+    const { orderNumber } = await params;
     const session = await getServerSession(authOptions);
     
     // Find the order
